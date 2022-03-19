@@ -1,0 +1,20 @@
+#navbar{
+  background: darkblue;
+  border-bottom: 1px solid black;
+  height: 10%;
+  width: 100%;
+  top:  0;
+  display: sticky;
+  position: fixed;
+  z-index: 999;
+}
+
+  
+Link {
+  margin-left: 2rem;
+  font-size: 2rem;
+  height: 80px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}

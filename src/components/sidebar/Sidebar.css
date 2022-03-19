@@ -1,0 +1,59 @@
+
+.pro-sidebar{
+	z-index: 999;
+}
+.pro-sidebar-layout {
+	width: 100%;
+
+}
+.pro-menu {
+	width: auto;
+	height: 100%;
+	top: 10%;
+	overflow-y: scroll;
+	bottom: 0;
+	display: inline-flex;
+	justify-content: center;
+	position: fixed;
+}
+.pro-sidebar,
+.pro-menu,
+.pro-menu-item,
+.pro-inner-item,
+.pro-item-content,
+.pro-sub-menu,
+.pro-inner-list-item,
+.pro-arrow{
+	background: darkblue !important;
+	color: white !important;
+}
+.pro-icon-wrapper {
+	background: white !important;
+}
+.pro-icon {
+	color: black;
+}
+
+.pro-sidebar .pro-menu a {
+	color: white !important;
+}
+.pro-sidebar .pro-menu a {
+	color: white !important;
+}
+
+.MiniDrawer-drawerOpen-9, .MiniDrawer-drawerClose-10 {
+	 background-color: #3f51b5 !important;
+	 overflow-x: hidden !important;
+	 overflow-y: hidden !important;
+}
+/* .MuiTypography-body1, .MuiSvgIcon-root  {
+	color: white !important;
+} */
+.MuiPaper-root.MuiDrawer-paper {
+	background-color: #3f51b5 !important;
+}
+
+a:hover {
+	color: white !important;
+	text-decoration: none !important;
+}

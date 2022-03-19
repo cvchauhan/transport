@@ -1,0 +1,78 @@
+.App {
+  font-family: sans-serif;
+  /*text-align: center;*/
+}
+
+.B {
+  background-color: bisque;
+}
+ 
+.card-header {
+  background-color: #4255bd !important;
+}
+.card-body {
+  border: 1px solid gray !important;
+  /*background-color: #eceef8 !important;*/
+}
+.card-title {
+  color: white !important;
+}
+
+.xtra-space {
+  display: inline-block;
+  width: 10px;
+}
+.MuiDialogTitle-root {
+  padding: 0 !important;
+}
+.MuiDataGrid-columnsContainer {
+  background-color:  #e0e0e0 !important;
+}
+.MuiListItem-root {
+  width: 0px !important;
+}
+
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+#change_date-0, #change_reason-0, #change_place-0 {
+  display: none !important;
+}
+
+td label {
+  font-weight: bold;
+  margin: 0px;
+}
+td p {
+  font-weight: lighter;
+  margin: 0px;
+}
+th label{
+  margin: 0px !important;
+}
+
+.flex-auto-space {
+  width: 50%;
+  flex: 1 1 auto;
+}
+
+.custom-mui-btn {
+  background-color: white !important;
+  color: #1565c0 !important;
+}
+.custom-mui-btn:hover {
+  background-color: antiquewhite !important;
+}
+#my-helper-text {
+  color: red !important;
+}
