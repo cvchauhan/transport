@@ -15,6 +15,7 @@ class PartyEmployeeAdd extends React.Component {
       type: 'Party',
       branches: null,
       branchId: null,
+      party_branch_name: null,
       party_emp_name: '',
       party_emp_email: '',
       party_emp_contact_no: '',
@@ -24,11 +25,10 @@ class PartyEmployeeAdd extends React.Component {
 
   componentDidMount = () => {
     Axios.get(`party_branch/branches/${this.props.partyId}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         let data = res.data;
         data.map((value) => {
-          value.label = value.party_br_state
+          value.label = value.party_br_city
         });
         this.setState({
           branches: data
@@ -42,6 +42,7 @@ class PartyEmployeeAdd extends React.Component {
     return {
       partyId: this.props.partyId,
       branchId: this.state.branchId,
+      party_branch_name: this.state.party_branch_name,
       party_emp_name: this.state.party_emp_name,
       party_emp_email: this.state.party_emp_email,
       party_emp_contact_no: this.state.party_emp_contact_no,
@@ -49,23 +50,13 @@ class PartyEmployeeAdd extends React.Component {
     }
   }
 
-  sendEmployeeDetails(values) {
+  sendEmployeeDetails(values) {    
+    values['party_branch_name'] = this.state.party_branch_name;
     Axios.post(`party_employee/add/`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.popupChange(false,  'Party Employee Added Successfully.', 'success'); //popup close
       }).catch(error => {
-        this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close
-        console.log(error);
-        if (error.response) {
-          console.log(error.response)
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log('Error', error.message);
-        }
-        console.log(error.config);
+        this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close        
       });
   }
 
@@ -89,10 +80,10 @@ class PartyEmployeeAdd extends React.Component {
                     className="branch-select"
                     name="branchId"
                     options={this.state.branches ? this.state.branches: []}
-                    getOptionLabel={option => option.party_br_state}
-                    onChange={(e, value) => {
-                      console.log(value);
+                    getOptionLabel={option => option.party_br_city}
+                    onChange={(e, value) => {                      
                       setFieldValue("branchId", value !== null ? value.id : values.branchId);
+                      this.setState({"party_branch_name": value.party_br_city});                      
                     }}
                     renderInput={params => (
                       <Mat.TextField

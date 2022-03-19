@@ -6,7 +6,8 @@ const supplierFormSchema = Yup.object().shape({
     supp_contact_no: Yup.string()
         .required("Phone no is required")
         .matches(phoneRegExp, 'Phone number is not valid'),
-    supp_email: Yup.string().email('Invalid email').required('Email is required'),
+    supp_email: Yup.string().email('Invalid email'),
+    supp_pan: Yup.string().length(10, 'PAN number must be 10 charecters.')
 });
 
 export default supplierFormSchema;

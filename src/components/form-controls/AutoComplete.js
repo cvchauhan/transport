@@ -5,16 +5,19 @@ import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 const filter = createFilterOptions();
 export default function AutoComplete(props) {
 
-  const { label, name, filterOptions, PaperComponent, id, options, onChange } = props
-
+  const { label, name, filterOptions, PaperComponent, id, options, onChange,value, disabled } = props  
+  let abc = value;
   return (
     <Autocomplete
       disablePortal
       id={id}
       size="small"
       name={name}
+      defaultValue={abc}
+      value={abc}
       options={options}
       filterOptions={filterOptions}
+      getOptionDisabled={option => disabled ? true : false}
       PaperComponent={PaperComponent}
       onChange={onChange}
       renderInput={(params) => (

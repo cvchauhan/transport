@@ -3,6 +3,7 @@ import Axios from '../../../axiosConfig';
 import Controls from '../../../components/form-controls/Controls';
 import { Formik, Form, Field } from 'formik';
 import partyBranchFormSchema from '../../../validations/partyBranchFormValidation';
+import * as LorryServices from '../../LR/lorry-services';
 
 class PartyBranchEdit extends React.Component {
   constructor(props) {
@@ -11,6 +12,8 @@ class PartyBranchEdit extends React.Component {
     this.state = {
       type: 'Party',
       party_br_add1: '',
+      party_br_state_id: '',
+      party_state_list: [],
       party_br_add2: '',
       party_br_add3: '',
       party_br_city: '',
@@ -19,18 +22,20 @@ class PartyBranchEdit extends React.Component {
     }
   }
 
-  componentDidMount = () => {
-    Axios.get(`party_branch/${this.props.id}/`).then(res => {
-			console.log(res.data);
+  componentDidMount = async() => {
+    const statedata = await LorryServices.default.allStateList();    
+    this.setState({party_state_list: statedata.result})
+    await Axios.get(`party_branch/${this.props.id}/`).then((res) => {			
 			const data = res.data;
 			this.setState({
+				party_br_state_id: data.party_br_state_id ? data.party_br_state_id : '',
 				party_br_add1: data.party_br_add1 ? data.party_br_add1 : '',
 				party_br_add2: data.party_br_add2 ? data.party_br_add2 : '',
 				party_br_add3: data.party_br_add3 ? data.party_br_add3 : '',
 				party_br_city: data.party_br_city ? data.party_br_city : '',
         party_br_state: data.party_br_state ? data.party_br_state : '',
         party_br_pin_code: data.party_br_pin_code ? data.party_br_pin_code : '',
-			});
+			});      
 		}).catch(err => {
 			console.log(err);
 		});
@@ -40,6 +45,7 @@ class PartyBranchEdit extends React.Component {
     return {
       partyId: this.props.partyId,
       type: this.state.type,
+      party_br_state_id: this.state.party_br_state_id,
       party_br_add1: this.state.party_br_add1,
       party_br_add2: this.state.party_br_add2,
       party_br_add3: this.state.party_br_add3,
@@ -51,8 +57,7 @@ class PartyBranchEdit extends React.Component {
 
   updateBranchDetails(values) {
     Axios.patch(`party_branch/${this.props.id}/`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.showAlertMsg(false, 'Party Branch Updated Successfully.', 'success'); //popup close
         this.props.refreshTable();
       }).catch(err => {
@@ -63,6 +68,7 @@ class PartyBranchEdit extends React.Component {
 
 
   render() {
+    const stateslist = this.state.party_state_list;
     return (
       <div className="content">
         <Formik
@@ -123,14 +129,41 @@ class PartyBranchEdit extends React.Component {
                   <Controls.Error name="party_br_city" />
                 </div>
                 <div className="col-md-4">
-                  <Field
+                <Field
+                    as={Controls.AutoComplete}
+                    label="State"
+                    name="party_br_state"                    
+                    value={values.party_br_state}                    
+                    options={stateslist}
+                    onChange={(e, newValue) => {                      
+                      if (newValue != null) {
+                        if (typeof newValue === 'string') {
+                          let val = newValue.value;
+                          values.party_br_state = val;
+                          this.setState({ party_br_state: val });
+                          this.setState({ party_br_state_id: newValue.id });
+                        } else if (newValue && newValue.values) {
+                          let value2 = newValue.values;
+                          this.setState({ party_br_state: value2 });
+                          this.setState({ party_br_state_id: newValue.id });
+                          values.party_br_state = value2;
+                        } else {           
+                          let value = newValue.label;
+                          values.party_br_state = value;
+                          this.setState({ party_br_state: value });         
+                          this.setState({ party_br_state_id: newValue.id });                               
+                        }
+                      }
+                    }}                    
+                  />
+                  {/* <Field
                     as={Controls.Input}
                     name="party_br_state"
                     label="State"
                     type="text"
                     value={values.party_br_state}
                     onChange={handleChange}
-                  />
+                  /> */}
                   <Controls.Error name="party_br_state" />
                 </div>
                 <div className="col-md-4">

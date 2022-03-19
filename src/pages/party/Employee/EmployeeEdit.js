@@ -9,12 +9,14 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 class PartyEmployeeEdit extends React.Component {
   constructor(props) {
-    super(props);
+    super(props);    
     this.updateEmployeeDetails = this.updateEmployeeDetails.bind(this);
     this.state = {
       type: 'Party',
+      party_branch_name: null,
       branches: null,
       branchId: null,
+      openBranch: false,
       party_emp_name: '',
       party_emp_email: '',
       party_emp_contact_no: '',
@@ -22,28 +24,28 @@ class PartyEmployeeEdit extends React.Component {
     }
   }
 
-  componentDidMount = () => {
-    // get single employee data by using emp id
+  componentDidMount = () => { 
     Axios.get(`party_employee/${this.props.id}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         const data = res.data;
+        const branchname = this.props.branches.find(x=> x.id == data.party_branch_id).party_br_city;
         this.setState({
           party_emp_name: data.party_emp_name ? data.party_emp_name : '',
           party_emp_email: data.party_emp_email ? data.party_emp_email : '',
           party_emp_contact_no: data.party_emp_contact_no ? data.party_emp_contact_no : '',
           party_emp_designation: data.party_emp_designation ? data.party_emp_designation : '',
+          branchId: data.party_branch_id ? data.party_branch_id : '',
+          party_branch_name: branchname ? branchname : '',
         });
       }).catch(err => {
         console.log(err);
       });
     // get all branches according to partyId
     Axios.get(`party_branch/branches/${this.props.partyId}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         let data = res.data;
         data.map((value) => {
-          value.label = value.party_br_state
+          value.label = value.party_br_city
         });
         this.setState({
           branches: data
@@ -57,6 +59,7 @@ class PartyEmployeeEdit extends React.Component {
     return {
       partyId: this.props.partyId,
       branchId: this.state.branchId,
+      party_branch_name: this.state.party_branch_name,
       party_emp_name: this.state.party_emp_name,
       party_emp_email: this.state.party_emp_email,
       party_emp_contact_no: this.state.party_emp_contact_no,
@@ -66,25 +69,23 @@ class PartyEmployeeEdit extends React.Component {
 
   updateEmployeeDetails(values) {
     Axios.patch(`party_employee/${this.props.id}/`, values)
-      .then(res => {
-        console.log(res);
+      .then(() => {        
         this.props.showAlertMsg(false, 'Party Employee Updated Successfully.', 'success'); //popup close
         this.props.refreshTable();
       }).catch(error => {
-        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close
-        console.log(error);
-        if (error.response) {
-          console.log(error.response)
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log('Error', error.message);
-        }
-        console.log(error.config);
+        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close       
       });
   }
-
+  setBranchPopup = () => {
+    this.setState(prevState => ({
+      openBranch: {
+        ...prevState.openBranch,
+      }
+    }));
+    this.setState({ 
+      openBranch: false,
+    });
+  };
 
   render() {
     return (
@@ -104,12 +105,14 @@ class PartyEmployeeEdit extends React.Component {
                   <Autocomplete
                     id="branchId"
                     className="branch-select"
-                    name="branchId"
+                    name="branchId"    
+                    // getOptionLabel={option => option.party_br_city}
+                    value={values.party_branch_name}                            
                     options={this.state.branches ? this.state.branches: []}
-                    getOptionLabel={option => option.party_br_state}
-                    onChange={(e, value) => {
-                      console.log(value);
-                      setFieldValue("branchId", value !== null ? value.id : values.branchId);
+                    onChange={(e, value) => {   
+                      // setFieldValue("branchId", value !== null ? value.id : values.branchId);                   
+                      this.setState({"party_branch_name": value.party_br_city});
+                      this.setState({"branchId": value !== null ? value.id : values.branchId});
                     }}
                     renderInput={params => (
                       <Mat.TextField

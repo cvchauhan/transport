@@ -12,6 +12,7 @@ class SupplierForm extends React.Component {
 			supp_name: '',
 			supp_contact_no: '',
 			supp_email: '',
+			supp_pan: '',
 		}
 	}
 
@@ -20,14 +21,13 @@ class SupplierForm extends React.Component {
 			supp_name: this.state.supp_name,
 			supp_contact_no: this.state.supp_contact_no,
 			supp_email: this.state.supp_email,
+			supp_pan: this.state.supp_pan,
 		}
 	}
 
-	sendSupplierDetails(values) {
-		console.log(values)
+	sendSupplierDetails(values) {		
 		Axios.post(`supplier/add/`, values)
-			.then(res => {
-				console.log(res);
+			.then(() => {				
 				this.props.popupChange(false, 'Supplier Added Successfully.', 'success'); //popup close
 				this.props.refreshTable();
 			}).catch(err => {
@@ -49,7 +49,7 @@ class SupplierForm extends React.Component {
 					{({ values, errors, touched, handleChange }) => (
 						<Form>
 							<div className="row">
-								<div className="col-12">
+								<div className="col-6">
 									<Field
 										as={Controls.Input}
 										name="supp_name"
@@ -59,10 +59,8 @@ class SupplierForm extends React.Component {
 										onChange={handleChange}
 									/>
 									<Controls.Error name="supp_name" />
-								</div>
-							</div>
-							<div className="row mt-2">
-								<div className="col-12">
+								</div>														
+								<div className="col-6">
 									<Field
 										as={Controls.Input}
 										name="supp_contact_no"
@@ -75,7 +73,7 @@ class SupplierForm extends React.Component {
 								</div>
 							</div>
 							<div className="row mt-2">
-								<div className="col-12">
+								<div className="col-6">
 									<Field
 										as={Controls.Input}
 										name="supp_email"
@@ -86,7 +84,18 @@ class SupplierForm extends React.Component {
 									/>
 									<Controls.Error name="supp_email" />
 								</div>
+								<div className="col-6">
+								<Field
+									as={Controls.Input}
+									name="supp_pan"
+									label="Supplier PAN"
+									value={values.supp_pan}
+									type="text"
+									onChange={handleChange}
+								/>
+								<Controls.Error name="supp_pan" />
 							</div>
+							</div>						
 							<div className="row mt-2 mr-2 float-right">
 								<Controls.Button text="Save" color="primary" type="submit" />
 							</div>

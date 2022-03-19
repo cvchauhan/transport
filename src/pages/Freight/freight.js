@@ -27,17 +27,7 @@ class DriverForm extends React.Component {
 		}
 	}
 
-	changeHandler = (e) => {
-		// this.setState({ [e.target.name]: e.target.value })
-		// this.setState(prevState => {
-		// 	// using object.assign
-		// 	// let driverFormValues = Object.assign({}, prevState.driverFormValues);
-		// 	// using spread operator
-		// 	let driverFormValues = { ...prevState.driverFormValues };
-		// 	driverFormValues[e.target.name] = e.target.value;
-		// 	console.log(driverFormValues)
-		// 	return { driverFormValues };
-		// });
+	changeHandler = (e) => {		
 		this.setState(prevState => ({
 			driverFormValues: {
 				...prevState.driverFormValues,
@@ -46,16 +36,10 @@ class DriverForm extends React.Component {
 		}));
 	}
 	sendDriverDetails(e) {
-		e.preventDefault();
-		console.log(this.state)
+		e.preventDefault();		
 		Axios.post(`driver/add/`, this.state.driverFormValues)
-			.then(res => {
-				console.log(res);
-				alert(res.data.message)
-				// this.setState({
-				// 	driverFormValues[drvr_name]: ""
-				// });
-				// e.target.reset();
+			.then(res => {				
+				alert(res.data.message)				
 			}).catch(err => {
 				console.log(err);
 			});
@@ -64,8 +48,7 @@ class DriverForm extends React.Component {
     handleChangeSupplier = (index, event) => {
       const list = [...this.state.supplierFields];
       list[index][event.target.name] = event.target.value;
-      this.setState({ supplierFields: list });
-      console.log(this.state.supplierFields);
+      this.setState({ supplierFields: list });      
     }
     // ===============  Remove Supply  =========================
     RemoveSupplier = index => {

@@ -4,9 +4,6 @@ import Button from '@mui/material/Button';
 import Popup from '../../components/popup/Popup';
 import SupplierForm from './SupplierForm';
 import SupplierEdit from './SupplierEdit';
-import SupplierBranchAdd from './Branch/BranchAdd';
-import SupplierEmployeeAdd from './Employee/EmployeeAdd';
-import SupplierBank from './Bank/BankAdd';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import * as Icons from '@mui/icons-material'
 import Typography from '@mui/material/Typography';
@@ -15,6 +12,8 @@ import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class SupplierTable extends React.Component{
   constructor(props) {
@@ -35,12 +34,28 @@ class SupplierTable extends React.Component{
       severity : null, // color for alert
     }
   }
-
+  submit = (id) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure you want to delete supplier?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.handleDelete(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   async fetchSuppliersAsync() {
     try {
-      this.setState({...this.state, isFetching: true});
-      const response = await Axios.get(`supplier/`);
-      this.setState({dataValues: response.data, isFetching: false, open: false});
+      setTimeout(async() => { 
+        this.setState({...this.state, isFetching: true});
+        const response = await Axios.get(`supplier/`);      
+        this.setState({dataValues: response.data.result, isFetching: false, open: false});      
+      }, 100); 
     } catch (e) {
         console.log(e);
         this.setState({...this.state, isFetching: false});
@@ -67,8 +82,7 @@ class SupplierTable extends React.Component{
       openAlert: true
     });
   }
-  handleAlertClose = (e) => {
-    console.log("lg gyi");
+  handleAlertClose = (e) => {    
     this.setState({
       openAlert: false
     });
@@ -141,8 +155,7 @@ class SupplierTable extends React.Component{
 
   ///////////////// Delete Record //////////////////////////
   handleDelete = (id) => {
-    // delete record from database and refresh table from here
-    console.log(id);
+    // delete record from database and refresh table from here    
     Axios.delete(`supplier/${id}`).then(res => {
       this.fetchSuppliersAsync();
       this.setState({
@@ -282,11 +295,11 @@ class SupplierTable extends React.Component{
               </Button>
             </Tooltip>
             <Tooltip title="Delete" placement="top">
-              <Button  variant="text" color="error" onClick = {() => { this.handleDelete(params.id)}}>
+              <Button  variant="text" color="error" onClick = {() => { this.submit(params.id)}}>
                 <Icons.Delete />
               </Button>
             </Tooltip>
-            <Tooltip title="Add Bank" placement="top">
+            {/* <Tooltip title="Add Bank" placement="top">
               <Button  variant="text" color="info" onClick = {() => { this.handleBankOpen(params.id)}}>
                 <Icons.AccountBalance />
               </Button>
@@ -300,7 +313,7 @@ class SupplierTable extends React.Component{
               <Button  variant="text" color="warning" onClick = {() => { this.handleEmployeeOpen(params.id)}}>
                 <Icons.PersonAddAlt1 />
               </Button>
-            </Tooltip>
+            </Tooltip> */}
           </ButtonGroup>
           </>
         )
@@ -352,16 +365,7 @@ class SupplierTable extends React.Component{
         </Popup>
         <Popup title="Edit Supplier" openPopup={this.state.openEdit} setOpenPopup={this.setEditPopup}>
           <SupplierEdit  popup={this.state.openEdit} supplierId={this.state.supplierId} popupChange={this.handleEditClose} refreshTable={this.handleRefreshTable}/>
-        </Popup>
-        <Popup title="Add Branch" openPopup={this.state.openBranch} setOpenPopup={this.setBranchPopup}>
-          <SupplierBranchAdd  popup={this.state.openBranch} supplierId={this.state.supplierId} popupChange={this.handleBranchClose}/>
-        </Popup>
-        <Popup title="Add Employee" openPopup={this.state.openEmployee} setOpenPopup={this.setEmployeePopup}>
-          <SupplierEmployeeAdd  popup={this.state.openEmployee} supplierId={this.state.supplierId} popupChange={this.handleEmployeeClose}/>
-        </Popup>
-        <Popup title="Add Bank" openPopup={this.state.openBank} setOpenPopup={this.setBankPopup}>
-          <SupplierBank  popup={this.state.openBank} supplierId={this.state.supplierId} popupChange={this.handleBankClose}/>
-        </Popup>
+        </Popup>        
       </div>
     );
   }

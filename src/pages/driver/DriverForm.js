@@ -13,7 +13,7 @@ class DriverForm extends React.Component {
 			drvr_name: '',
 			drvr_contact_no: '',
 			drvr_licns_no: '',
-			drvr_licns_exp_date: new Date().toISOString().split('T')[0],
+			drvr_licns_exp_date: null,
 		}
 	}
 
@@ -22,24 +22,19 @@ class DriverForm extends React.Component {
 			drvr_name: this.state.drvr_name,
 			drvr_contact_no: this.state.drvr_contact_no,
 			drvr_licns_no: this.state.drvr_licns_no,
-			drvr_licns_exp_date: this.state.drvr_licns_exp_date,
+			drvr_licns_exp_date: this.state.drvr_licns_exp_date ? this.state.drvr_licns_exp_date:null,
 		}
 	}
 
-	sendDriverDetails(values) {
-		console.log(values)
+	sendDriverDetails(values) {		
 		Axios.post(`driver/add/`, values)
-			.then(res => {
-				console.log(res);
+			.then(() => {				
 				this.props.popupChange(false, 'Driver Added Successfully.', 'success'); //close popup
 				this.props.refreshTable();
 			}).catch(err => {
 				this.props.popupChange(false, 'Something Went Wrong.', 'error'); //close popup
 				console.log(err);
 			});
-	}
-	handleDateChange(e){
-		console.log(e);
 	}
 
 	render() {		
@@ -105,9 +100,11 @@ class DriverForm extends React.Component {
 											name="drvr_licns_exp_date"
 											size="small"
 											onChange={(newValue) => {
-												newValue = newValue.toISOString().split('T')[0];
-												values.drvr_licns_exp_date = newValue;
-												this.setState({drvr_licns_exp_date:newValue});
+												if (newValue != null) {
+													newValue = newValue.toISOString().split('T')[0];
+													values.drvr_licns_exp_date = newValue;
+													this.setState({drvr_licns_exp_date:newValue});
+												}
 											}}
 										/>
 									</div>

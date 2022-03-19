@@ -13,13 +13,12 @@ class DriverEdit extends React.Component {
 			drvr_name: '',
 			drvr_contact_no: '',
 			drvr_licns_no: '',
-			drvr_licns_exp_date: new Date().toISOString().split('T')[0],
-		}
+			drvr_licns_exp_date: null,
+		}		
 	}
 	componentDidMount = () => {
-		Axios.get(`driver/${this.props.id}`).then(res => {
-			console.log(res.data);
-			const data = res.data;
+		Axios.get(`driver/${this.props.id}`).then(res => {			
+			const data = res.data.result;
 			this.setState({
 				drvr_name: data.drvr_name ? data.drvr_name : '',
 				drvr_contact_no: data.drvr_contact_no ? data.drvr_contact_no : '',
@@ -36,16 +35,14 @@ class DriverEdit extends React.Component {
 		return {
 			drvr_name: this.state.drvr_name,
 			drvr_contact_no: this.state.drvr_contact_no,
-			drvr_licns_no: this.state.drvr_licns_no,
-			drvr_licns_exp_date: this.state.drvr_licns_exp_date,
+			drvr_licns_no: this.state.drvr_licns_no,			
+			drvr_licns_exp_date: this.state.drvr_licns_exp_date ? this.state.drvr_licns_exp_date:null,
 		}
 	}
 
-	updateDriverDetails(values) {
-		console.log(values);
+	updateDriverDetails(values) {		
 		Axios.patch(`driver/${this.props.id}`, values)
-			.then(res => {
-				console.log(res);
+			.then(res => {				
 				this.props.popupChange(false, 'Driver Updated Successfully.', 'success'); //close popup
 				this.props.refreshTable();
 			}).catch(err => {
@@ -116,9 +113,11 @@ class DriverEdit extends React.Component {
 										name="drvr_licns_exp_date"
 										size="small"
 										onChange={(newValue) => {
-											newValue = newValue.toISOString().split('T')[0];
-											values.drvr_licns_exp_date = newValue;
-											this.setState({drvr_licns_exp_date:newValue});
+											if (newValue != null) {
+												newValue = newValue.toISOString().split('T')[0];
+												values.drvr_licns_exp_date = newValue;
+												this.setState({drvr_licns_exp_date:newValue});
+											}
 										}}
 									/>
 									<Controls.Error name="drvr_licns_exp_date" />

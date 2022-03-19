@@ -3,6 +3,7 @@ import Axios from '../../../axiosConfig';
 import Controls from '../../../components/form-controls/Controls';
 import { Formik, Form, Field } from 'formik';
 import supplierBranchFormSchema from '../../../validations/supplierBranchFormValidation';
+import * as LorryServices from '../../LR/lorry-services';
 
 class SupplierBranchAdd extends React.Component {
   constructor(props) {
@@ -11,6 +12,8 @@ class SupplierBranchAdd extends React.Component {
     this.state = {
       type: 'Supplier',
       supp_br_add1: '',
+      supp_br_state_id: '',
+      supp_state_list: [],
       supp_br_add2: '',
       supp_br_add3: '',
       supp_br_city: '',
@@ -18,11 +21,17 @@ class SupplierBranchAdd extends React.Component {
       supp_br_pin_code: '',
     }
   }
-
-  initialValues() {
+  componentDidMount = async() => {
+    const data = await LorryServices.default.allStateList();    
+    this.setState({
+      supp_state_list: data.result
+    });    
+  }
+  initialValues() {    
     return {
       supplierId: this.props.supplierId,
-      type: this.state.type,
+      type: this.state.type,      
+      supp_br_state_id: this.state.supp_br_state_id,      
       supp_br_add1: this.state.supp_br_add1,
       supp_br_add2: this.state.supp_br_add2,
       supp_br_add3: this.state.supp_br_add3,
@@ -32,11 +41,9 @@ class SupplierBranchAdd extends React.Component {
     }
   }
 
-  sendBranchDetails(values) {
-    console.log(values)
+  sendBranchDetails(values) {    
     Axios.post(`supplier_branch/${this.props.supplierId}/add`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.popupChange(false, 'Supplier Branch Added Successfully.', 'success'); //popup close
       }).catch(err => {
         this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close
@@ -46,6 +53,7 @@ class SupplierBranchAdd extends React.Component {
 
 
   render() {
+    const stateslist = this.state.supp_state_list;
     return (
       <div className="content">
         <Formik
@@ -105,14 +113,42 @@ class SupplierBranchAdd extends React.Component {
                   <Controls.Error name="supp_br_city" />
                 </div>
                 <div className="col-md-4">
-                  <Field
+                <Field
+                    as={Controls.AutoComplete}
+                    id="supp_br_state"
+                    label="State"
+                    name="supp_br_state"                    
+                    options={stateslist}
+                    getOptionLabel={option => option.label}
+                    onChange={(e, newValue) => {                      
+                      if (newValue != null) {
+                        if (typeof newValue === 'string') {
+                          let val = newValue.value;
+                          values.supp_br_state = val;
+                          this.setState({ supp_br_state: val });
+                          this.setState({ supp_br_state_id: newValue.id });    
+                        } else if (newValue && newValue.values) {
+                          let value2 = newValue.values;
+                          this.setState({ supp_br_state: value2 });
+                          this.setState({ supp_br_state_id: newValue.id });    
+                          values.supp_br_state = value2;
+                        } else {           
+                          let value = newValue.label;
+                          values.supp_br_state = value;
+                          this.setState({ supp_br_state: value });    
+                          this.setState({ supp_br_state_id: newValue.id });                                        
+                        }
+                      }
+                    }}                    
+                  />
+                  {/* <Field
                     as={Controls.Input}
                     name="supp_br_state"
                     label="State"
                     type="text"
                     value={values.supp_br_state}
                     onChange={handleChange}
-                  />
+                  /> */}
                   <Controls.Error name="supp_br_state" />
                 </div>
                 <div className="col-md-4">

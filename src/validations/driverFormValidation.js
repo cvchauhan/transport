@@ -6,8 +6,8 @@ const driverFormSchema = Yup.object().shape({
     drvr_contact_no: Yup.string()
         .required("Phone no is required")
         .matches(phoneRegExp, 'Phone number is not valid'),
-    drvr_licns_no: Yup.string().required('Driver license number is required'),
-    drvr_licns_exp_date: Yup.string(),
+    // drvr_licns_no: Yup.string().required('Driver license number is required'),
+    // drvr_licns_exp_date: Yup.string(),
 })
 
 export default driverFormSchema;

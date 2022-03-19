@@ -13,6 +13,7 @@ class SupplierBankEdit extends React.Component {
     this.state = {
       type: 'Supplier',
       branches: null,
+      supp_bank_branch_name: null,
       branchId: null,
       supp_bank_name: '',
       supp_bank_ifsc: '',
@@ -21,28 +22,28 @@ class SupplierBankEdit extends React.Component {
     }
   }
 
-  componentDidMount = () => {
-    // get single bank data by using emp id
+  componentDidMount = () => {    
     Axios.get(`supplier_bank/${this.props.id}/`)
-      .then(res => {
-        console.log(res);
-        const data = res.data;
+      .then(res => {        
+        const data = res.data;        
+        const branchname = this.props.branches.find(x=> x.id == data.supplier_branch_id).supp_br_city; 
         this.setState({
+          supp_bank_branch_name: branchname ? branchname : '',
           supp_bank_name: data.supp_bank_name ? data.supp_bank_name : '',
           supp_bank_ifsc: data.supp_bank_ifsc ? data.supp_bank_ifsc : '',
           supp_bank_ah_name: data.supp_bank_ah_name ? data.supp_bank_ah_name : '',
           supp_bank_acc_no: data.supp_bank_acc_no ? data.supp_bank_acc_no : '',
+          branchId: data.supplier_branch_id ? data.supplier_branch_id : '',
         });
       }).catch(err => {
         console.log(err);
       });
     // get all branches according to supplierId
     Axios.get(`supplier_branch/branches/${this.props.supplierId}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         let data = res.data;
         data.map((value) => {
-          value.label = value.supp_br_state
+          value.label = value.supp_br_city
         });
         this.setState({
           branches: data
@@ -56,6 +57,7 @@ class SupplierBankEdit extends React.Component {
     return {
       supplierId: this.props.supplierId,
       branchId: this.state.branchId,
+      supp_bank_branch_name: this.state.supp_bank_branch_name,
       supp_bank_name: this.state.supp_bank_name,
       supp_bank_ifsc: this.state.supp_bank_ifsc,
       supp_bank_ah_name: this.state.supp_bank_ah_name,
@@ -66,22 +68,12 @@ class SupplierBankEdit extends React.Component {
   
   sendBankDetails(values) {
     Axios.patch(`supplier_bank/${this.props.id}/`, values)
-      .then(res => {
-        console.log(res);
+      .then(() => {        
         this.props.showAlertMsg(false, 'Supplier Bank Added Successfully.', 'success'); //popup close
         this.props.refreshTable();
       }).catch(error => {
-        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close
+        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close        
         console.log(error);
-        if (error.response) {
-          console.log(error.response)
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log('Error', error.message);
-        }
-        console.log(error.config);
       });
   }
 
@@ -105,16 +97,17 @@ class SupplierBankEdit extends React.Component {
                     id="branchId"
                     className="branch-select"
                     name="branchId"
+                    value={values.supp_bank_branch_name}                    
                     options={this.state.branches ? this.state.branches: []}
-                    getOptionLabel={option => option.supp_br_state}
-                    onChange={(e, value) => {
-                      console.log(value);
+                    // getOptionLabel={option => option.supp_br_city}
+                    onChange={(e, value) => {                      
                       setFieldValue("branchId", value !== null ? value.id : values.branchId);
                     }}
                     renderInput={params => (
                       <Mat.TextField
                         {...params}
                         name="branchId"
+                        value={values.branchId}
                         label="Select Branch"
                         variant="outlined"
                         fullWidth

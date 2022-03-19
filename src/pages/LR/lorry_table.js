@@ -1,9 +1,6 @@
 import * as React from 'react';
-import { DataGrid, GridToolbar, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
-import Popup from '../../components/popup/Popup';
-// import DataGrid from '../../components/Tables/DataGrid';
-import AddIcon from '@mui/icons-material/Add';
 import Typography from '@mui/material/Typography';
 import Axios from '../../axiosConfig';
 import {withRouter, Link} from 'react-router-dom';
@@ -11,58 +8,93 @@ import { styled, alpha } from '@mui/material/styles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Delete from '@mui/icons-material/Delete';
+import * as Icon from '@mui/icons-material';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
+
 class LorryTable extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       open: false,
       open2: false,
+      open3: false,
       openEdit: false,
       dataShow: false,
       columns: '',
       dataValues: [],
       isFetching: false,
       anchorEl: false,
+      anchorEl1: false,
       id : null,
-    }
-    console.log(this.state.openEdit);
-    console.log(this.state.id);
+    }   
   }
-
+  submit = (id) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure you want to delete receipts?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.deleteRecord(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   ///////////////////////////// For action button ///////////////////////////
   
   handleClick = (event) => {
     this.setState({anchorEl:event.currentTarget});
   };
+  handleClick1 = (event) => {
+    this.setState({anchorEl1:event.currentTarget});
+  };
   handleClose = () => {
     this.setState({anchorEl: false});
   };
-  hundleView = (id) => {
-    console.log(id);
-  }
-  hundleEdit = (id) => {
-    console.log(id);
-  }
-  hundleDelete = (id) => {
-    console.log(id);
-  }
-
+  handleClose1 = () => {
+    this.setState({anchorEl1: false});
+  };
+ 
   async fetchDriversAsync() {
     try {
       this.setState({...this.state, isFetching: true});
-      const response = await Axios.get(`receipt/`);
-      console.log(response.data)
-      this.setState({dataValues: response.data, isFetching: false, open: false});
+      const response = await Axios.get(`receipt/`);     
+      this.setState({dataValues: response.data.result, isFetching: false, open: false});
     } catch (e) {
         console.log(e);
         this.setState({...this.state, isFetching: false});
     }
   }
 
+  async deleteRecord(id) {
+    try {      
+      const res = await Axios.delete(`receipt/${id}`);  
+      toast.success(res.data.message, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+    });  
+      this.fetchDriversAsync();         
+    } catch (e) {
+        console.log(e);        
+    }
+  }
+
   componentDidMount = (e) => {
-    this.timer = setTimeout(() => this.fetchDriversAsync(), 5000);
+    this.timer = setTimeout(() => this.fetchDriversAsync(), 1000);
   }
   /////////////////// Open Add Driver Popup /////////////////////////////
   handleClickOpen = (e) => {
@@ -70,8 +102,7 @@ class LorryTable extends React.Component {
       open: true
     });
   }
-  handleClickClose = (e) => {
-    console.log("lg gyi");
+  handleClickClose = (e) => {    
     this.setState({
       open: false
     });
@@ -88,9 +119,7 @@ class LorryTable extends React.Component {
   /////////////////// Open Edit Driver Popup /////////////////////////////
   handleEditOpen = (id) => {
     this.state.openEdit = true;
-    this.state.id = id;
-    console.log("open", this.state);
-
+    this.state.id = id;    
   }
    //// When popup close
   setEditPopup = () => {
@@ -128,8 +157,8 @@ class LorryTable extends React.Component {
       ))(({ theme }) => ({
       '& .MuiPaper-root': {
         borderRadius: 6,
-        marginTop: theme.spacing(1),
-        minWidth: 180,
+        marginTop: theme.spacing(0),
+        minWidth: 185,
         color:
           theme.palette.mode === 'light' ? 'rgb(55, 65, 81)' : theme.palette.grey[300],
         boxShadow:
@@ -153,13 +182,15 @@ class LorryTable extends React.Component {
       },
     }));
     const anchorEl = this.state.anchorEl;
+    const anchorEl1 = this.state.anchorEl1;
     const open2 = Boolean(this.state.anchorEl);
+    const open3 = Boolean(this.state.anchorEl1);
     const columns = [
       { field: 'lr_no', headerName: 'LR No.', flex: 1 },
       { field: 'ewaybill_number', headerName: 'EwayBill No.', flex: 1 },
       { field: 'ewaybill_validity', headerName: 'EwayBill Validity', flex: 1 },
-      { field: 'from', headerName: 'From', flex: 1 },
-      { field: 'to', headerName: 'To', flex: 1 },
+      { field: 'from_city', headerName: 'From', flex: 1 },
+      { field: 'to_city', headerName: 'To', flex: 1 },
       { field: 'party_doc_date', headerName: 'party doc date', flex: 1 },
       { field: 'party_doc_no', headerName: 'party doc no', flex: 1 },
       { field: 'party_doc_type', headerName: 'Party doc type', flex: 1 },
@@ -170,7 +201,21 @@ class LorryTable extends React.Component {
         renderCell: (params) => (
           <strong>
             <div>
-              <Button
+            <ButtonGroup variant="outlined" size="small">
+            <Link to={`/lorry/${params.id}`} style={{ textDecoration: 'none' }}>
+            <Tooltip title="Edit" placement="top">
+              <Button variant="text" color="primary">
+                <Icon.Edit />
+              </Button>
+            </Tooltip>
+            </Link>
+            <Tooltip title="Delete" placement="top">
+              <Button  variant="text" color="error" onClick = {() => { this.submit(params.id)}}>
+                <Icon.Delete />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+              {/* <Button
                 id="demo-customized-button"
                 aria-controls="demo-customized-menu"
                 aria-haspopup="true"
@@ -183,26 +228,28 @@ class LorryTable extends React.Component {
                 Action
               </Button>
               <StyledMenu
-                id="demo-customized-menu"
+                id="demo-customized-button"
                 MenuListProps={{
-                  'aria-labelledby': 'demo-customized-button',
+                  'aria-labelledby': 'demo-customized-menu',
                 }}
                 anchorEl={anchorEl}
                 open={open2}
                 onClose={this.handleClose}
               >
-                <MenuItem onClick={this.handleClose}>
-                  <Button  variant="text" onClick = {() => { this.handleEditOpen(params.id)}}>
+                <Link to={`/lorry/${params.id}`} style={{ textDecoration: 'none' }}>
+                <MenuItem>
+                  <Button  variant="text">
                     <EditIcon />Edit
                   </Button>
                 </MenuItem>
+                </Link>
                 <MenuItem onClick={this.handleClose}>
-                  <Button  variant="text" onClick = {() => { this.handleDelete(params.id)}}>
+                  <Button  variant="text" onClick = {() => { this.submit(params.id)}}>
                     <Delete />
                     Delete
                   </Button>
                 </MenuItem>
-              </StyledMenu>
+              </StyledMenu> */}
             </div>
           </strong>
         )
@@ -212,6 +259,15 @@ class LorryTable extends React.Component {
     const rows = this.state.dataValues;
     return (
       <div className="content">
+          <ToastContainer position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover/>
         <div className="row">
           <div className="col-6">
             <Typography variant="h5" sx={{ color: '#3f51b5' }} component="div" gutterBottom>
@@ -219,8 +275,54 @@ class LorryTable extends React.Component {
             </Typography>
           </div>
           <div className="col-6 text-right">
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={this.handleClickOpen}>Add
-            </Button>
+            {/* <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={this.handleClickOpen}>Add
+            </Button> */}
+            <Button
+                id="demo-customized-button1"
+                aria-controls="demo-customized-menu1"
+                aria-haspopup="true"
+                aria-expanded={open3 ? 'true' : 'false'}
+                variant="contained"
+                color="info"
+                size="small"
+                onClick={this.handleClick1}
+              >
+                Add
+              </Button>
+              <StyledMenu
+                id="demo-customized-menu1"
+                MenuListProps={{
+                  'aria-labelledby': 'demo-customized-button1',
+                }}
+                anchorEl1={anchorEl1}
+                open={open3}
+                onClose={this.handleClose1}
+              >
+                <MenuItem onClick={this.handleClose1}>
+                <Link to='/lorry-json' style={{ textDecoration: 'none' }}>
+                  <Button  variant="text" onClick = {() => { this.handleEditOpen()}}>
+                  <Icon.Receipt />
+                   Json
+                  </Button>
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={this.handleClose1}>
+                <Link to='/lorry-form' style={{ textDecoration: 'none' }}>
+                  <Button  variant="text" onClick = {() => { this.handleDelete()}}>                    
+                    <EditIcon />
+                    Manually
+                  </Button>
+                </Link>
+                </MenuItem>
+                <MenuItem onClick={this.handleClose}>
+                <Link to='/lorry-form' style={{ textDecoration: 'none' }}>
+                  <Button  variant="text" onClick = {() => { this.handleDelete()}}>                    
+                    <EditIcon />
+                    PDF upload
+                  </Button>
+                </Link>
+                </MenuItem>
+              </StyledMenu>
           </div>
         </div>
         <div className="row ml-1 mt-2 mr-1">

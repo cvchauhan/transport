@@ -13,7 +13,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import * as Icons from '@mui/icons-material';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
-
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class DriverTable extends React.Component {
   constructor(props) {
@@ -31,12 +32,28 @@ class DriverTable extends React.Component {
       severity : null, // color for alert
     }
   }
-
+  submit = (id) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.handleDelete(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   async fetchDriversAsync() {
     try {
-      this.setState({...this.state, isFetching: true});
-      const response = await Axios.get(`driver/`);
-      this.setState({dataValues: response.data, isFetching: false, open: false});
+      setTimeout(async() => {        
+        this.setState({...this.state, isFetching: true});
+        const response = await Axios.get(`driver/`);      
+        this.setState({dataValues: response.data.result, isFetching: false, open: false});      
+      }, 100); 
     } catch (e) {
         console.log(e);
         this.setState({...this.state, isFetching: false});
@@ -44,7 +61,7 @@ class DriverTable extends React.Component {
   }
 
   componentDidMount = () => {
-    // this.timer = setTimeout(() => this.fetchDriversAsync(), 5000);
+    // this.timer = setTimeout(() => this.fetchDriversAsync(), 100);
     this.fetchDriversAsync();
   }
 
@@ -57,8 +74,7 @@ class DriverTable extends React.Component {
       openAlert: true
     });
   }
-  handleAlertClose = (e) => {
-    console.log("lg gyi");
+  handleAlertClose = (e) => {    
     this.setState({
       openAlert: false
     });
@@ -105,8 +121,7 @@ class DriverTable extends React.Component {
     this.setState({
         openEdit: true,
         id: id
-    });
-    console.log("open", this.state);
+    });    
   }
   handleEditClose = (e, message, severity) => {
     this.setState({
@@ -159,7 +174,7 @@ class DriverTable extends React.Component {
               <Button variant="text" color="primary" onClick = {() => { this.handleEditOpen(params.id)}}>
                 <Icons.Edit />
               </Button>
-              <Button  variant="text" color="error" onClick = {() => { this.handleDelete(params.id)}}>
+              <Button  variant="text" color="error" onClick = {() => { this.submit(params.id)}}>
                 <Icons.Delete />
               </Button>
             </ButtonGroup>

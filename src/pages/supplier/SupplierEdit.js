@@ -12,17 +12,18 @@ class SupplierEdit extends React.Component {
 			supp_name: '',
 			supp_contact_no: '',
 			supp_email: '',
+			supp_pan: '',
 		}
 	}
 
 	componentDidMount = () => {
-		Axios.get(`supplier/${this.props.supplierId}`).then(res => {
-			console.log(res.data);
-			const data = res.data;
+		Axios.get(`supplier/${this.props.supplierId}`).then(res => {			
+			const data = res.data.result;
 			this.setState({
 				supp_name: data.supp_name ? data.supp_name : '',
 				supp_contact_no: data.supp_contact_no ? data.supp_contact_no : '',
 				supp_email: data.supp_email ? data.supp_email : '',
+				supp_pan: data.supp_pan ? data.supp_pan : ''
 			})
 		}).catch(err => {
 			console.log(err);
@@ -34,14 +35,13 @@ class SupplierEdit extends React.Component {
 			supp_name: this.state.supp_name,
 			supp_contact_no: this.state.supp_contact_no,
 			supp_email: this.state.supp_email,
+			supp_pan: this.state.supp_pan
 		}
 	}
 
-	updateSupplierDetails(values) {
-		console.log(values)
+	updateSupplierDetails(values) {		
 		Axios.patch(`supplier/${this.props.supplierId}/`, values)
-			.then(res => {
-				console.log(res);
+			.then(() => {				
 				this.props.popupChange(false, 'Supplier Updated Successfully.', 'success'); //popup close
 				this.props.refreshTable();
 			}).catch(err => {
@@ -100,6 +100,19 @@ class SupplierEdit extends React.Component {
 										onChange={handleChange}
 									/>
 									<Controls.Error name="supp_email" />
+								</div>
+							</div>
+							<div className="row mt-2">
+								<div className="col-12">
+									<Field
+										as={Controls.Input}
+										name="supp_pan"
+										label="Supplier PAN"
+										type="text"
+										value={values.supp_pan}
+										onChange={handleChange}
+									/>
+									<Controls.Error name="supp_pan" />
 								</div>
 							</div>
 							<div className="row mt-2 mr-2 float-right">

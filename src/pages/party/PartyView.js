@@ -9,6 +9,12 @@ import PartyBranchEdit from './Branch/BranchEdit';
 import PartyEmployeeEdit from './Employee/EmployeeEdit';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import { Link } from 'react-router-dom';
+import PartyBranchAdd from './Branch/BranchAdd';
+import PartyEmployeeAdd from './Employee/EmployeeAdd';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class PartyView extends Component {
   constructor(props) {
@@ -22,17 +28,33 @@ class PartyView extends Component {
       openAlert: false,
       message: null,
       severity: null,
+      openBranch: false,
+      openEmployee: false,
+      partyId:null
     }
   }
-
+  submit = (id,name) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: `Are you sure you want to delete ${name}?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => name == 'branch' ? this.handleBranchDelete(id) : this.handleEmployeeDelete(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   // fetching party details by id
   async fetchPartyDetailAsync() {
     try {
       this.setState({ ...this.state, isFetching: true });
       const response = await Axios.get(`party/${this.props.match.params.id}`);
       // single party details storing in dataValues
-      this.setState({ dataValues: response.data, isFetching: false });
-      console.log(this.state.dataValues);
+      this.setState({ dataValues: response.data.result, isFetching: false });      
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
@@ -47,8 +69,7 @@ class PartyView extends Component {
   }
 
   // edit pop-up open or close 
-  handleBranchEditOpen = (id) => {
-    console.log(id);
+  handleBranchEditOpen = (id) => {    
     // set state id of branch and employee
     this.setState({
       openBranchEdit: true,
@@ -63,14 +84,39 @@ class PartyView extends Component {
         ...prevState.openBranchEdit,
       }
     }));
-    this.setState({ openBranchEdit: false });
+    this.setState({ openBranchEdit: false });    
   }
-
+  handleEmployeeOpen = (partyId) => {
+    this.setState({
+      openEmployee: true,
+      partyId: partyId,
+    });
+  }
+  handleEmployeeClose = (e, message, severity) => {
+    this.setState({
+      openEmployee: false,
+      openAlert: true,
+      message: message,
+      severity: severity,
+      partyId: null,
+    });
+    this.handleRefreshTable();
+  }
+  setEmployeePopup = () => {
+    this.setState(prevState => ({
+      openEmployee: {
+        ...prevState.openEmployee,
+      }
+    }));
+    this.setState({ 
+      openEmployee: false,
+      partyId: null
+    })
+  };
   // delete branch
   handleBranchDelete = (id) => {
     Axios.delete(`party_branch/${id}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.handleRefreshTable();
         this.setState({
           openAlert: true,
@@ -108,8 +154,7 @@ class PartyView extends Component {
   }
 
   // employee edit open
-  handleEmployeeEditOpen = (id) => {
-    console.log(id);
+  handleEmployeeEditOpen = (id) => {    
     // set state id of branch and employee
     this.setState({
       openEmployeeEdit: true,
@@ -126,12 +171,20 @@ class PartyView extends Component {
     }));
     this.setState({ openEmployeeEdit: false });
   }
-
+  handleBranchClose = (e, message, severity) => {
+    this.setState({
+      openBranch: false,
+      openAlert: true,
+      message: message,
+      severity: severity,
+      partyId: null,
+    });
+    this.handleRefreshTable();
+  }
   // employee delete
   handleEmployeeDelete = (id) => {
     Axios.delete(`party_employee/${id}`)
-    .then(res => {
-      console.log(res);
+    .then(res => {      
       this.handleRefreshTable();
       this.setState({
         openAlert: true,
@@ -143,12 +196,44 @@ class PartyView extends Component {
       console.log(err)
     });
   }
-
+  handleBranchOpen = (partyId) => {
+    this.setState({
+      openBranch: true,
+      partyId: partyId,
+    });
+  }
+  setBranchPopup = () => {
+    this.setState(prevState => ({
+      openBranch: {
+        ...prevState.openBranch,
+      }
+    }));
+    this.setState({ 
+      openBranch: false,
+    });
+  };
   render() {
     const branches = this.state.dataValues ? this.state.dataValues.party_branches : [];
-    const employees = this.state.dataValues ? this.state.dataValues.party_employees : [];
+    const employees = this.state.dataValues ? this.state.dataValues.party_employees : [];    
+    if (employees) {
+      employees.map((value)=>{        
+        let branchname = branches.find(x=> x.id == value.party_branch_id).party_br_city
+        value['party_branch_name'] = branchname;
+      })
+    }    
     return (
       <div ref={this.dialogBox} className="content">
+        <Link to='/party'><Button><ArrowBackIcon/>Go Back</Button></Link>
+        <Tooltip title="Add Branch" placement="top">
+            <Button  variant="text" color="success" onClick = {() => { this.handleBranchOpen(this.props.match.params.id)}}>
+              <Icons.LocationCity />
+            </Button>
+        </Tooltip>
+        <Tooltip title="Add Employee" placement="top">
+            <Button  variant="text" color="warning" onClick = {() => { this.handleEmployeeOpen(this.props.match.params.id)}}>
+              <Icons.PersonAddAlt1 />
+            </Button>
+        </Tooltip>
         <table className="table table-bordered">
           <tbody>
             <tr className="table-info">
@@ -187,7 +272,7 @@ class PartyView extends Component {
                   <td><p className="text-wrap">{branch.party_br_add3}</p></td>
                   <td><p>{branch.party_br_city}</p></td>
                   <td><p>{branch.party_br_state}</p></td>
-                  <td><p>{branch.party_br_pin_code}</p></td>
+                  <td><p>{branch.party_br_pin_code ? branch.party_br_pin_code : ''}</p></td>
                   <td>
                     <ButtonGroup variant="outlined" size="small">
                       <Tooltip title="Edit" placement="top">
@@ -196,7 +281,7 @@ class PartyView extends Component {
                         </Button>
                       </Tooltip>
                       <Tooltip title="Delete" placement="top">
-                        <Button variant="text" color="error" onClick={() => { this.handleBranchDelete(branch.id) }}>
+                        <Button variant="text" color="error" onClick={() => { this.submit(branch.id,'branch') }}>
                           <Icons.Delete />
                         </Button>
                       </Tooltip>
@@ -218,7 +303,8 @@ class PartyView extends Component {
               <th colSpan="2"><label>Name:</label></th>
               <th><label>Designation:</label></th>
               <th><label>Mobile:</label></th>
-              <th colSpan="2"><label>E-mail:</label></th>
+              <th colSpan="1"><label>E-mail:</label></th>
+              <th colSpan="1"><label>Branch:</label></th>
               <th><label>Actions</label></th>
             </tr>
             {employees ? (
@@ -227,7 +313,8 @@ class PartyView extends Component {
                   <td colSpan="2"><p>{employee.party_emp_name}</p></td>
                   <td><p>{employee.party_emp_designation}</p></td>
                   <td><p>{employee.party_emp_contact_no}</p></td>
-                  <td colSpan="2"><p>{employee.party_emp_email}</p></td>
+                  <td colSpan="1"><p>{employee.party_emp_email}</p></td>
+                  <td colSpan="1"><p>{employee.party_branch_name}</p></td>
                   <td>
                     <ButtonGroup variant="outlined" size="small">
                       <Tooltip title="Edit" placement="top">
@@ -236,7 +323,7 @@ class PartyView extends Component {
                         </Button>
                       </Tooltip>
                       <Tooltip title="Delete" placement="top">
-                        <Button variant="text" color="error" onClick={() => { this.handleEmployeeDelete(employee.id) }}>
+                        <Button variant="text" color="error" onClick={() => { this.submit(employee.id,'employee') }}>
                           <Icons.Delete />
                         </Button>
                       </Tooltip>
@@ -269,7 +356,13 @@ class PartyView extends Component {
           <PartyBranchEdit partyId={this.state.partyId} id={this.state.id} showAlertMsg={this.handleAlertMsg} refreshTable={this.handleRefreshTable} />
         </Popup>
         <Popup title="Edit Party Employee" openPopup={this.state.openEmployeeEdit} setOpenPopup={this.setCloseEmployeePopup}>
-          <PartyEmployeeEdit partyId={this.state.partyId} id={this.state.id} showAlertMsg={this.handleAlertMsg} refreshTable={this.handleRefreshTable} />
+          <PartyEmployeeEdit partyId={this.state.partyId} id={this.state.id} showAlertMsg={this.handleAlertMsg} refreshTable={this.handleRefreshTable} branches={branches}/>
+        </Popup>
+        <Popup title="Add Branch" openPopup={this.state.openBranch} setOpenPopup={this.setBranchPopup}>
+          <PartyBranchAdd popup={this.state.openBranch} partyId={this.state.partyId} popupChange={this.handleBranchClose} refreshTable={this.handleRefreshTable}/>
+        </Popup>
+        <Popup title="Add Employee" openPopup={this.state.openEmployee} setOpenPopup={this.setEmployeePopup}>
+          <PartyEmployeeAdd popup={this.state.openEmployee} partyId={this.state.partyId} popupChange={this.handleEmployeeClose}/>
         </Popup>
       </div>
     )

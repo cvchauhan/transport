@@ -4,8 +4,6 @@ import Button from '@mui/material/Button';
 import Popup from '../../components/popup/Popup';
 import PartyForm from './PartyForm';
 import PartyEdit from './PartyEdit';
-import PartyBranchAdd from './Branch/BranchAdd';
-import PartyEmployeeAdd from './Employee/EmployeeAdd';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import * as Icons from '@mui/icons-material';
 import Typography from '@mui/material/Typography';
@@ -14,6 +12,8 @@ import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class PartyTable extends React.Component{
   constructor(props) {
@@ -34,10 +34,12 @@ class PartyTable extends React.Component{
   }
 
   async fetchPartiesAsync() {
-    try {
+    try {      
       this.setState({...this.state, isFetching: true});
-      const response = await Axios.get(`party/`);
-      this.setState({dataValues: response.data, isFetching: false, open: false});
+      setTimeout(async() => {        
+        const response = await Axios.get(`party/`);                
+        this.setState({dataValues: response.data.result, isFetching: false, open: false});      
+      }, 100); 
     } catch (e) {
         console.log(e);
         this.setState({...this.state, isFetching: false});
@@ -51,7 +53,21 @@ class PartyTable extends React.Component{
   handleRefreshTable = (e) => {
     this.fetchPartiesAsync();
   }
-
+  submit = (id) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure you want to delete party?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.handleDelete(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   //store on localstorage
   storePartyId = (id) => {
     localStorage.removeItem('partyId');
@@ -64,8 +80,7 @@ class PartyTable extends React.Component{
       openAlert: true
     });
   }
-  handleAlertClose = (e) => {
-    console.log("lg gyi");
+  handleAlertClose = (e) => {    
     this.setState({
       openAlert: false
     });
@@ -138,8 +153,7 @@ class PartyTable extends React.Component{
 
   ///////////////// Delete Record //////////////////////////
   handleDelete = (id) => {
-    // delete record from database and refresh table from here
-    console.log(id);
+    // delete record from database and refresh table from here    
     Axios.delete(`party/${id}`).then(res => {
       this.fetchPartiesAsync();
       this.setState({
@@ -229,11 +243,11 @@ class PartyTable extends React.Component{
               </Button>
             </Tooltip>
             <Tooltip title="Delete" placement="top">
-              <Button  variant="text" color="error" onClick = {() => { this.handleDelete(params.id)}}>
+              <Button  variant="text" color="error" onClick = {() => { this.submit(params.id)}}>
                 <Icons.Delete />
               </Button>
             </Tooltip>
-            <Tooltip title="Add Branch" placement="top">
+            {/* <Tooltip title="Add Branch" placement="top">
               <Button  variant="text" color="success" onClick = {() => { this.handleBranchOpen(params.id)}}>
                 <Icons.LocationCity />
               </Button>
@@ -242,13 +256,13 @@ class PartyTable extends React.Component{
               <Button  variant="text" color="warning" onClick = {() => { this.handleEmployeeOpen(params.id)}}>
                 <Icons.PersonAddAlt1 />
               </Button>
-            </Tooltip>
+            </Tooltip> */}
           </ButtonGroup>
           </>
         ),
       },
     ];
-    const rows = this.state.dataValues;
+    const rows = this.state.dataValues;    
     return (
       <div className="content">
         <div className="row">
@@ -294,12 +308,12 @@ class PartyTable extends React.Component{
         <Popup title="Edit Party" openPopup={this.state.openEdit} setOpenPopup={this.setEditPopup}>
           <PartyEdit popup={this.state.openEdit} partyId={this.state.partyId} popupChange={this.handleEditClose} refreshTable={this.handleRefreshTable}/>
         </Popup>
-        <Popup title="Add Branch" openPopup={this.state.openBranch} setOpenPopup={this.setBranchPopup}>
+        {/* <Popup title="Add Branch" openPopup={this.state.openBranch} setOpenPopup={this.setBranchPopup}>
           <PartyBranchAdd popup={this.state.openBranch} partyId={this.state.partyId} popupChange={this.handleBranchClose}/>
-        </Popup>
-        <Popup title="Add Employee" openPopup={this.state.openEmployee} setOpenPopup={this.setEmployeePopup}>
+        </Popup> */}
+        {/* <Popup title="Add Employee" openPopup={this.state.openEmployee} setOpenPopup={this.setEmployeePopup}>
           <PartyEmployeeAdd popup={this.state.openEmployee} partyId={this.state.partyId} popupChange={this.handleEmployeeClose}/>
-        </Popup>
+        </Popup> */}
       </div>
     );
   }

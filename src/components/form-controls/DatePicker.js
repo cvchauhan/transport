@@ -16,11 +16,7 @@ export default function DatePickers(props) {
             value={value}
             size={size}
             name={name}
-            onChange={onChange}
-            // onChange={(newValue) => {
-            //   setValue({newValue});
-            //   console.log(newValue);
-            // }}disableFuture
+            onChange={onChange}                       
             format="MM/dd/yyyy"
             views={['year', 'month', 'day']}
             renderInput={(params) => <TextField {...params} size="small" value={textValue} />}

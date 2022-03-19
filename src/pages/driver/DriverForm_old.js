@@ -7,13 +7,7 @@ class DriverForm extends React.Component {
 		super(props);
 		this.dialogBox = React.createRef();
 		this.sendDriverDetails = this.sendDriverDetails.bind(this);
-		this.state = {
-			// driverFormValues: {
-			// 	drvr_name: '',
-			// 	drvr_contact_no: '',
-			// 	drvr_licns_no: '',
-			// 	drvr_licns_exp_date: '',
-			// },
+		this.state = {			
 			drvr_name: '',
 			drvr_contact_no: '',
 			drvr_licns_no: '',
@@ -22,31 +16,12 @@ class DriverForm extends React.Component {
 	}
 
 	changeHandler = (e) => {
-
-		this.setState({ [e.target.name]: e.target.value })
-		// this.setState(prevState => {
-		// 	// using object.assign
-		// 	// let driverFormValues = Object.assign({}, prevState.driverFormValues);
-		// 	// using spread operator
-		// 	let driverFormValues = { ...prevState.driverFormValues };
-		// 	driverFormValues[e.target.name] = e.target.value;
-		// 	console.log(driverFormValues)
-		// 	return { driverFormValues };
-		// });
-		// this.setState(prevState => ({
-		// 	driverFormValues: {
-		// 		...prevState.driverFormValues,
-		// 		[e.target.name]: e.target.value
-		// 	}
-		// }));
+		this.setState({ [e.target.name]: e.target.value })		
 	}
 	sendDriverDetails(e) {
-		e.preventDefault();
-		console.log(this.state);
+		e.preventDefault();		
 		Axios.post(`driver/add/`, this.state)
-			.then(res => {
-				console.log(res);
-				// alert(res.data.message);
+			.then(res => {							
 				this.props.popupChange(false, 'Driver Added Successfully.', 'success'); //close popup
 				this.props.refreshTable();
 			}).catch(err => {

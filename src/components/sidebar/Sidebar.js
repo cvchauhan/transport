@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import classNames from "classnames";
-import { withStyles } from "@material-ui/core/styles";
+import { withStyles,styled, alpha } from "@material-ui/core/styles";
 import Drawer from "@material-ui/core/Drawer";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -12,10 +12,11 @@ import MenuIcon from "@material-ui/icons/Menu";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
-
+import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import './Sidebar.css';
-import { Switch, Route, } from 'react-router-dom';
+import { Switch, Route,Link } from 'react-router-dom';
 import LorryForm from '../../pages/LR/lorry_form';
+import LorryEditForm from '../../pages/LR/lorry_edit_form';
 import LorryJson from '../../pages/LR/lorry_json';
 import LorryTable from '../../pages/LR/lorry_table';
 import Print from '../../pages/LR/Print';
@@ -25,22 +26,41 @@ import Products from '../../pages/Products';
 import PartyTable from '../../pages/party/PartyTable';
 import DriverTable from '../../pages/driver/DriverTable';
 import VehicleTable from '../../pages/vehicle/VehicleTable';
+import UserTable from '../../pages/user/UserTable';
 import SupplierTable from '../../pages/supplier/SupplierTable';
 
 import { SidebarData } from './SidebarData';
 import SubMenu from './SubMenu';
 import PartyView from "../../pages/party/PartyView";
 import SupplierView from "../../pages/supplier/SupplierView";
+import Login from "../../pages/profile/Login";
+import Profile from "../../pages/profile/Profile";
+import jwt from 'jwt-decode';
+import KeyIcon from '@mui/icons-material/Key';
+import SettingsPowerIcon from '@mui/icons-material/SettingsPower';
+import Popup from '../../components/popup/Popup';
+import UserPasswordChange from './UserPasswordChange';
+
 // import {
 //   HashRouter as Router,
 //   Route,
 //   } from 'react-router-dom';
 
 const drawerWidth = 220;
-
+if (localStorage.getItem('authToken') && jwt(localStorage.getItem('authToken')).user_role != 1) {
+  let removeindex = SidebarData.findIndex(x=>x.title=='User');
+  if (removeindex > -1) {
+    SidebarData.splice(removeindex, 1);
+  }  
+}
 const styles = theme => ({
   root: {
-    display: "flex"
+    display: "flex",
+    height: 100
+  },
+  menu: {
+    position: "relative",
+    top: 100
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1
@@ -118,11 +138,24 @@ class MiniDrawer extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      id: '',
       count: 0,
       open: false,
       anchorEl: null,
       opendrop: false,
+      openViewpass: false,
+      openAlert: true,
+      message: '',
+      severity: '', 
     };
+  }
+  handleViewOpenPass = () => {
+    let id = JSON.parse(localStorage.getItem('user')).id;
+    this.setState({
+      openViewpass: true,
+      id: id,
+      anchorEl: null
+    });
   }
   handleClick = () => {
     if (this.state.opendrop) {
@@ -131,7 +164,25 @@ class MiniDrawer extends React.Component {
       this.setState({ opendrop: true })
     }
   };
-
+  handleViewClosepass = (e, message, severity) => {
+    this.setState({     
+      openViewpass: false,
+      openAlert: true,
+      message: message,
+      severity: severity,   
+    });
+  }
+  setViewPopuppass = () => {
+    this.setState(prevState => ({
+      openViewpass: {
+        ...prevState.openViewpass,
+      }
+    }));
+    this.setState({ 
+      openViewpass: false,
+      id: null,
+    })
+  };
   handleDrawerOpen = () => {
     this.setState({ open: !this.state.open });
   };
@@ -145,13 +196,57 @@ class MiniDrawer extends React.Component {
   };
   handleClose = () => {
     this.setState({ anchorEl: null });
-  };
-
+  };  
+  logout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };  
   render() {
+    const StyledMenu = styled((props) => (
+      <Menu
+        elevation={0}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        {...props}
+      />
+      ))(({ theme }) => ({
+      '& .MuiPaper-root': {
+        borderRadius: 6,
+        marginTop: theme.spacing(1),
+        minWidth: 185,
+        color:
+          theme.palette.mode === 'light' ? 'rgb(55, 65, 81)' : theme.palette.grey[300],
+        boxShadow:
+          'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+        '& .MuiMenu-list': {
+          padding: '4px 0',
+        },
+        '& .MuiMenuItem-root': {
+          '& .MuiSvgIcon-root': {
+            overflow: 'unset',
+            fontSize: 18,
+            color: theme.palette.text.secondary,
+            marginRight: theme.spacing(1.5),
+          },
+          '&:active': {
+            backgroundColor: alpha(
+              theme.palette.primary.main,
+              theme.palette.action.selectedOpacity,
+            ),
+          },
+        },
+      },
+    }));
     const { classes, theme } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-
+    const { username } = JSON.parse(localStorage.getItem('user'))
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -171,6 +266,7 @@ class MiniDrawer extends React.Component {
             <Typography variant="h6" color="inherit" className={classes.grow} noWrap
             ><span className="font-weight-bold" style={{fontFamily: 'cursive'}}><span style={{color: '#F1C40F'}}>Transport</span>Sevak</span></Typography>
             <div>
+              Welcome, {username}
               <IconButton
                 aria-owns={open ? "menu-appbar" : undefined}
                 aria-haspopup="true"
@@ -179,7 +275,7 @@ class MiniDrawer extends React.Component {
               >
                 <AccountCircle />
               </IconButton>
-              <Menu
+              <StyledMenu
                 id="menu-appbar"
                 anchorEl={anchorEl}
                 anchorOrigin={{
@@ -193,9 +289,13 @@ class MiniDrawer extends React.Component {
                 open={open}
                 onClose={this.handleClose}
               >
-                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                <MenuItem onClick={this.handleClose}>My account</MenuItem>
-              </Menu>
+                <Link to='/profile' style={{ textDecoration: 'none' }}>
+                <MenuItem onClick={this.handleClose} style={{overflow: 'unset',color:'black',width: 180 +'!important'}}><PermIdentityIcon/>Profile</MenuItem>
+                </Link>
+                {/* <MenuItem to='/profile' style={{ textDecoration: 'none' }}>Profile</MenuItem> */}
+                <MenuItem onClick={this.handleViewOpenPass} style={{overflow: 'unset',color:'black',width: 180}}><KeyIcon/>Change Password</MenuItem>
+                <MenuItem onClick={this.logout} style={{overflow: 'unset',color:'black',width: 180}}><SettingsPowerIcon/>Logout</MenuItem>
+              </StyledMenu>
             </div>
           </Toolbar>
         </AppBar>
@@ -235,10 +335,16 @@ class MiniDrawer extends React.Component {
               <Route exact path='/vehicle'>
                 <VehicleTable />
               </Route>
+              <Route exact path='/user'>
+                <UserTable />
+              </Route>
+              <Route path='/lorry/:id' component={LorryEditForm} />
               <Route path='/lorry' component={LorryTable} />
               <Route path='/lorry-form' component={LorryForm} />
               <Route path='/lorry-json' component={LorryJson} />
               <Route path='/print' component={Print} />
+              <Route path='/login' component={Login} />
+              <Route path='/profile' component={Profile} />
               {/* <Route path='/lory-receipt' component={LoryReceipt} /> */}
               {/* <Route path='/party-form' component={PartyForm} /> */}
               {/* <Route path='/pod-form' component={POD} /> */}
@@ -246,6 +352,9 @@ class MiniDrawer extends React.Component {
             </Switch>
           {/* </Router> */}
         </main>
+        <Popup title="Password Change" openPopup={this.state.openViewpass} setOpenPopup={this.setViewPopuppass}>
+            <UserPasswordChange popup={this.state.openViewpass} id={this.state.id} popupChange={this.handleViewClosepass} />
+          </Popup>
       </div>
     );
   }

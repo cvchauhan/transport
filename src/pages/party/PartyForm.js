@@ -25,11 +25,9 @@ class PartyForm extends React.Component {
 		}
 	}
 
-	sendPartyDetails(values) {
-		console.log(values)
+	sendPartyDetails(values) {		
 		Axios.post(`party/add/`, values)
-			.then(res => {
-				console.log(res);
+			.then(res => {				
 				this.props.popupChange(false, 'Party Added Successfully.', 'success'); //popup close
 				this.props.refreshTable();
 			}).catch(err => {
@@ -56,7 +54,7 @@ class PartyForm extends React.Component {
 									<Field
 										as={Controls.Input}
 										name="party_name"
-										label="Commpany Name"
+										label="Company Name"
 										type="text"
 										value={values.party_name}
 										onChange={handleChange}
@@ -92,7 +90,7 @@ class PartyForm extends React.Component {
 									<Field
 										as={Controls.Input}
 										name="party_email"
-										label="Commpany Email Address."
+										label="Company Email Address."
 										type="email"
 										value={values.party_email}
 										onChange={handleChange}

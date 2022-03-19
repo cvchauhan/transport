@@ -14,6 +14,7 @@ class SupplierEmployeeEdit extends React.Component {
       type: 'Supplier',
       branches: null,
       branchId: null,
+      supp_branch_name: null,
       supp_emp_name: '',
       supp_emp_email: '',
       supp_emp_contact_no: '',
@@ -24,25 +25,26 @@ class SupplierEmployeeEdit extends React.Component {
   componentDidMount = () => {
     // get single employee data by using emp id
     Axios.get(`supplier_employee/${this.props.id}/`)
-      .then(res => {
-        console.log(res);
-        const data = res.data;
+      .then(res => {        
+        const data = res.data;            
+        const branchname = this.props.branches.find(x=> x.id == data.supplier_branch_id).supp_br_city;             
         this.setState({
           supp_emp_name: data.supp_emp_name ? data.supp_emp_name : '',
+          supp_branch_name: branchname ? branchname : '',
           supp_emp_email: data.supp_emp_email ? data.supp_emp_email : '',
           supp_emp_contact_no: data.supp_emp_contact_no ? data.supp_emp_contact_no : '',
           supp_emp_designation: data.supp_emp_designation ? data.supp_emp_designation : '',
+          branchId: data.supplier_branch_id ? data.supplier_branch_id : '',
         });
       }).catch(err => {
         console.log(err);
       });
     // get all branches according to supplierId
     Axios.get(`supplier_branch/branches/${this.props.supplierId}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         let data = res.data;
         data.map((value) => {
-          value.label = value.supp_br_state
+          value.label = value.supp_br_city
         });
         this.setState({
           branches: data
@@ -57,6 +59,7 @@ class SupplierEmployeeEdit extends React.Component {
       supplierId: this.props.supplierId,
       branchId: this.state.branchId,
       supp_emp_name: this.state.supp_emp_name,
+      supp_branch_name: this.state.supp_branch_name,
       supp_emp_email: this.state.supp_emp_email,
       supp_emp_contact_no: this.state.supp_emp_contact_no,
       supp_emp_designation: this.state.supp_emp_designation,
@@ -66,22 +69,11 @@ class SupplierEmployeeEdit extends React.Component {
   
   updateEmployeeDetails(values) {
     Axios.patch(`supplier_employee/${this.props.id}/`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.showAlertMsg(false, 'Supplier Employee Updated Successfully.', 'success'); //popup close
         this.props.refreshTable();
       }).catch(error => {
-        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close
-        console.log(error);
-        if (error.response) {
-          console.log(error.response)
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log('Error', error.message);
-        }
-        console.log(error.config);
+        this.props.showAlertMsg(false, 'Something Went Wrong.', 'error'); //popup close               
       });
   }
 
@@ -105,11 +97,11 @@ class SupplierEmployeeEdit extends React.Component {
                     id="branchId"
                     className="branch-select"
                     name="branchId"
-                    options={this.state.branches ? this.state.branches: []}
-                    getOptionLabel={option => option.supp_br_state}
-                    onChange={(e, value) => {
-                      console.log(value);
-                      setFieldValue("branchId", value !== null ? value.id : values.branchId);
+                    value={values.supp_branch_name}
+                    options={this.state.branches ? this.state.branches: []}                    
+                    onChange={(e, value) => {                                            
+                      this.setState({"branchId": value !== null ? value.id : values.branchId});
+                      this.setState({"supp_branch_name": value.supp_br_city});
                     }}
                     renderInput={params => (
                       <Mat.TextField

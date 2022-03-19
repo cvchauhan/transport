@@ -11,6 +11,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import * as Icons from '@mui/icons-material';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class VehicleTable extends React.Component {
   constructor(props) {
@@ -28,12 +30,30 @@ class VehicleTable extends React.Component {
       severity: null, // color for alert
     }
   }
-
+  submit = (id) => {
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure you want to delete vehicle?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.handleDelete(id)
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
   async fetchVehiclesAsync() {
     try {
       this.setState({ ...this.state, isFetching: true });
-      const response = await Axios.get(`vehicle/`);
-      this.setState({ dataValues: response.data, isFetching: false, open: false });
+      setTimeout(async() => {        
+        const response = await Axios.get(`vehicle/`);            
+        if (response.data) {
+          this.setState({ dataValues: response.data, isFetching: false, open: false });      
+        }             
+      }, 100); 
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
@@ -104,6 +124,7 @@ class VehicleTable extends React.Component {
   handleEditClose = (e, message, severity) => {
     this.setState({
       openView: false,
+      openEdit: false,
       openAlert: true,
       message: message,
       severity: severity,
@@ -128,12 +149,6 @@ class VehicleTable extends React.Component {
       id: id,
     });
   }
-  handleEditClose = (e) => {
-    this.setState({
-      openEdit: false
-    });
-  }
-
   //// When popup close
   setEditPopup = () => {
     this.setState(prevState => ({
@@ -179,7 +194,7 @@ class VehicleTable extends React.Component {
             <Button variant="text" color="primary" onClick={() => { this.handleEditOpen(params.id) }}>
               <Icons.Edit />
             </Button>
-            <Button variant="text" color="error" onClick={() => { this.handleDelete(params.id) }}>
+            <Button variant="text" color="error" onClick={() => { this.submit(params.id) }}>
               <Icons.Delete />
             </Button>
           </ButtonGroup>

@@ -8,6 +8,7 @@ import ActionButton from "./ActionButton";
 import AutoComplete from "./AutoComplete";
 import Typography from "./Typography";
 import Error from "./Error";
+import Password from "./Password";
 
 const Controls = {
     Input,
@@ -20,6 +21,7 @@ const Controls = {
     AutoComplete,
     Typography,
     Error,
+    Password
 }
 
 export default Controls;

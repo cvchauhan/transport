@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom'
 import * as Mat from '@mui/material';
 import Controls from '../../components/form-controls/Controls';
 import Popup from '../../components/popup/Popup';
-import City from '../../components/JsonData/City';
 import PartyForm from '../party/PartyForm';
 import VehicleForm from '../vehicle/VehicleForm';
 import SupplierForm from '../supplier/SupplierForm';
@@ -16,34 +15,65 @@ import Paper from "@material-ui/core/Paper";
 import ComponentToPrint from './Print';
 import ReactToPrint from "react-to-print";
 import { createFilterOptions } from '@mui/material/Autocomplete';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
+import { Spinner } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 class LoryJson extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      loading : false,
       openVehicle: false,
       openSuppiler: false,
       openDriver: false,
       openParty: false,
       partyOptions: [],
-      driverOptions: [],
+      driverOptions: [],      
+      cityListOptions: [],
+      stateListOptions:[],
+      cityfromOptions: [],
       vehicleOptions: [],
       supplierOptions: [],
+      branch_option_ship:[],
+      branch_option_disp:[],
       lorryJsonData: {
         lr_no: '',
         lr_date: new Date().toISOString().split('T')[0],
         ewaybill_validity: new Date().toISOString().split('T')[0],
         from: '',
         to: '',
+        to_city: '',
+        to_state: '',
+        from_city: '',
+        from_state: '',
         consignor: '',
         consignee: '',
         dispatch_from: '',
         ship_to: '',
         ewaybill_number: '',
+        vehicle_no:'',
+        vehicle_type:'',
+        supplier:'',
+        driver_name:'',
         drvr_licns_exp_date: new Date().toISOString().split('T')[0],
         chargeable_unit: '',      
+        chargeable_wt: '',      
         service_charges: '',
         shortage_tolerance_limit: '',
+
+        dispatch_state_from_id: '',
+        ship_state_to_id: '',
+        dispatch_from_id: '',
+        ship_to_id: '',        
+        dispatch_city_from_id:'',	
+        ship_city_to_id:'',	
+
         dispatch_address_line_1: '',
         dispatch_address_line_2: '',
         dispatch_address_line_3: '',
@@ -61,10 +91,13 @@ class LoryJson extends Component {
         party_doc_date: new Date().toISOString().split('T')[0],
         party_invoice_value: '',
         itemOptions: '',
+        party_id:'',
         party_bill_to: '',
         party_bill_type: '',
         party_chargeable_unit: '',
+        party_chargeable_wt: '',
         party_actual_unit: '',
+        party_actual_wt: '',
         party_freight: '',
         party_freight_unit: '',
         party_freight_total: '',
@@ -74,10 +107,30 @@ class LoryJson extends Component {
         party_detention_unit: '',
         party_detention_amount: '',
         party_comment: '',
+        supp_id:'',
+        supp_bill_to: '',
+        supp_bill_type: '',
+        supp_chargeable_unit: '',
+        supp_chargeable_wt: '',
+        supp_actual_unit: '',
+        supp_actual_wt: '',
+        supp_freight: '',
+        supp_freight_unit: '',
+        supp_freight_total: '',
+        supp_invoice_type: '',
+        supp_shortage_unit: '',
+        supp_shortage_limit: '',
+        supp_detention_unit: '',
+        supp_detention_amount: '',
+        supp_comment: '',
         vehicleFields: [{
           vehicle_no: '',
+          vehicle_type:'',
+          vehicle_name: '',
           supplier: '',
+          supplier_id: '',
           driver_name: '',
+          driver_id: '',
           driver_no: '',
           change_place: '',
           change_reason: '',
@@ -103,15 +156,14 @@ class LoryJson extends Component {
           ifsc_code: '',
         }]
       }
-    }
+    }    
     this.handleSubmit = this.handleSubmit.bind(this)
     this.fetchLorryJson = this.fetchLorryJson.bind(this)
   }
 
   async fetchLorryJson() {
     try {
-      const response = await Axios.get(`jsonlr`);
-      console.log(response.data)
+      const response = await Axios.get(`jsonlr`);      
       const res = response.data;
       // this.setState(prevState => ({
       //   lorryJsonData: {
@@ -138,29 +190,53 @@ class LoryJson extends Component {
     }
   }
 
-  dataChange = (e) => {
-    console.log("lg gyi");
+  dataChange = (e) => {    
     this.setState({
       open: false
     });
   }
+  fetchLorryReceipts = async () => {
+    const lorry = await LorryServices.default.allLorryReceipts();
+    lorry.result.map((value)=> {
+      value.id = value.id
+      value.label = value.to_city
+      value.from_city = value.from_city         
+    });      
+    this.setState(prevState => ({
+      ...prevState,
+			lorryJsonData: {
+				...prevState.lorryJsonData,				
+        ['lr_no']: 'LR-00'+(lorry.result.length+1)
+			}
+		}));
+    this.setState({ loading: false})
+  }
   fetchDrivers = async () => {
-    const drivers = await LorryServices.default.allDriverDetails();
-    drivers.map((value)=> {
+    this.setState({ loading: true})
+    const drivers = await LorryServices.default.allDriverDetails();    
+    drivers.result.map((value)=> {      
       value.id = value.id;
-      value.label = value.drvr_name;
+      value.label = value.drvr_name + `(${value.drvr_contact_no})`;
       value.name = value.drvr_name;
     });
-    this.setState({driverOptions: drivers}); 
+    this.setState({driverOptions: drivers.result.length > 0 ? drivers.result : []}); 
+  }
+  fetchCity = async () => {
+    const city = await LorryServices.default.allCityList();        
+    this.setState({cityListOptions: city.result.length > 0 ? city.result : []});     
+  }
+  fetchState = async () => {
+    const state = await LorryServices.default.allStateList();        
+    this.setState({stateListOptions: state.result.length > 0 ? state.result : []});     
   }
   fetchParties = async () => {
-    const parties = await LorryServices.default.allPartiesDetails();
-    parties.map((value)=> {
+    const parties = await LorryServices.default.allPartiesDetails();    
+    parties.result.map((value)=> {
       value.id = value.id;
       value.label = value.party_name;
       value.name = value.party_name;
-    });
-    this.setState({partyOptions: parties});
+    });    
+    this.setState({partyOptions: parties.result.length > 0 ? parties.result : []});
   }
   fetchVehicles = async () => {
     const vehicles = await LorryServices.default.allVehicleDetails();
@@ -173,18 +249,101 @@ class LoryJson extends Component {
   }
   fetchSuppliers = async () => {
     const suppliers = await LorryServices.default.allSupplierDetails();
-    suppliers.map((value)=> {
+    suppliers.result.map((value)=> {
       value.id = value.id;
       value.label = value.supp_name;
       value.name = value.supp_name;
     });
-    this.setState({supplierOptions: suppliers});
+    this.setState({supplierOptions: suppliers.result.length > 0 ? suppliers.result : []});
   }
-  componentDidMount = () => {
+  getBranchData(id,flag) {
+    let partylist = this.state.partyOptions;   
+    const party_branches = partylist.map(value=> value.party_branches);    
+    // let branchOption = party_branches[0].filter(item => item.party_id == id)
+    let branchOption = []
+    for (let i=0; i<party_branches.length;i++) {
+      branchOption = party_branches[i].filter(item => item.party_id == id);
+      if (branchOption.length > 0) break;
+    }
+    branchOption.map((value)=> {
+      value.id = value.id;
+      value.label = value.party_br_city;
+      value.name = value.party_br_city;
+    });  
+    if (flag == 1) {
+      this.setState({
+        branch_option_ship: branchOption
+      })    
+    }  else {
+      this.setState({
+        branch_option_disp: branchOption
+      })
+    }
+  }
+  submit = (id,flag) => {
+    const field = flag == 0 ? 'dispatch_insert_branch' : 'ship_insert_branch';
+    confirmAlert({
+      title: 'Confirm',
+      message: 'Are you sure you want autofill?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => this.setBranchData(id,flag)
+        },
+        {
+          label: 'No',
+          onClick: () =>   this.setState(prevState => ({
+            lorryJsonData : {
+              ...prevState.lorryJsonData,
+              [field]: true
+            } 
+          }))              
+        }
+      ]
+    });
+  };
+  setBranchData(id,flag) {           
+      if (flag == 0) {
+        const dispath_branch_list = this.state.branch_option_disp;
+        const filter_dispath_branch_list = dispath_branch_list.find(item=>item.id == id); 
+        this.setState(prevState => ({
+          lorryJsonData: {
+            ...prevState.lorryJsonData,
+            ['dispatch_city']: filter_dispath_branch_list.party_br_city,
+            ['dispatch_address_line_1']: filter_dispath_branch_list.party_br_add1,
+            ['dispatch_address_line_2']: filter_dispath_branch_list.party_br_add2,
+            ['dispatch_address_line_3']: filter_dispath_branch_list.party_br_add3,
+            ['dispatch_pincode']: filter_dispath_branch_list.party_br_pin_code,
+            ['dispatch_state']: filter_dispath_branch_list.party_br_state,
+          }
+        }));
+      } else {
+        const ship_branch_list = this.state.branch_option_ship;
+        const ship_dispath_branch_list = ship_branch_list.find(item=>item.id == id); 
+        this.setState(prevState => ({
+          lorryJsonData: {
+            ...prevState.lorryJsonData,
+            ['ship_city']: ship_dispath_branch_list.party_br_city,
+            ['ship_address_line_1']: ship_dispath_branch_list.party_br_add1,
+            ['ship_address_line_2']: ship_dispath_branch_list.party_br_add2,
+            ['ship_address_line_3']: ship_dispath_branch_list.party_br_add3,
+            ['ship_pincode']: ship_dispath_branch_list.party_br_pin_code,
+            ['ship_state']: ship_dispath_branch_list.party_br_state,
+          }
+        }));
+      }    
+  }
+  getAllData = () => {
+    this.fetchCity();
+    this.fetchState();
     this.fetchDrivers();
     this.fetchVehicles();
     this.fetchParties();
     this.fetchSuppliers();
+    this.fetchLorryReceipts();
+  }
+  componentDidMount = () => {
+    this.getAllData(); 
   }
 
   handleRefreshParties = () => {
@@ -192,6 +351,9 @@ class LoryJson extends Component {
   }
   handleRefreshDrivers = () => {
     this.fetchDrivers();
+  }
+  handleRefreshLorry = () => {
+    this.fetchLorryReceipts();
   }
   handleRefreshVehicles = () => {
     this.fetchVehicles();
@@ -201,7 +363,6 @@ class LoryJson extends Component {
   }
 
   changeHandler = (e) => {
-    // this.setState({[e.target.name]: e.target.value})
     this.setState(prevState => ({
       ...prevState,
 			lorryJsonData: {
@@ -209,17 +370,56 @@ class LoryJson extends Component {
 				[e.target.name]: e.target.value
 			}
 		}));
+    if (e.target.name == 'party_chargeable_wt') {      
+      this.setState(prevState => ({
+        ...prevState,
+        lorryJsonData: {
+          ...prevState.lorryJsonData,
+          ['party_freight_total']: prevState.lorryJsonData.party_freight != '' ? prevState.lorryJsonData.party_freight * prevState.lorryJsonData.party_chargeable_wt : prevState.lorryJsonData.party_chargeable_wt
+        }
+      }));
+    } else if (e.target.name == 'party_freight') {     
+      this.setState(prevState => ({
+        ...prevState,
+        lorryJsonData: {
+          ...prevState.lorryJsonData,
+          ['party_freight_total']: prevState.lorryJsonData.party_chargeable_wt != '' ? prevState.lorryJsonData.party_chargeable_wt * prevState.lorryJsonData.party_freight : prevState.lorryJsonData.party_freight
+        }
+      }));
+    }
+    if (e.target.name == 'supp_chargeable_wt') {      
+      this.setState(prevState => ({
+        ...prevState,
+        lorryJsonData: {
+          ...prevState.lorryJsonData,
+          ['supp_freight_total']: prevState.lorryJsonData.supp_freight != '' ? prevState.lorryJsonData.supp_freight * prevState.lorryJsonData.supp_chargeable_wt : prevState.lorryJsonData.supp_chargeable_wt
+        }
+      }));
+    } else if (e.target.name == 'supp_freight') {     
+      this.setState(prevState => ({
+        ...prevState,
+        lorryJsonData: {
+          ...prevState.lorryJsonData,
+          ['supp_freight_total']: prevState.lorryJsonData.supp_chargeable_wt != '' ? prevState.lorryJsonData.supp_chargeable_wt * prevState.lorryJsonData.supp_freight : prevState.lorryJsonData.supp_freight
+        }
+      }));
+    }
   }
-  
   handleSubmit(event) {
     const form = event.currentTarget;
-    event.preventDefault();
-    
-    console.log(this.state.lorryJsonData)
+    event.preventDefault();    
     Axios.post(`receipt/add/`, this.state.lorryJsonData)
-			.then(res => {
-				console.log(res);
-				alert(res.data.message)
+			.then(res => {				
+				toast.success(res.data.message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+      }); 
+      this.getAllData();
 			}).catch(err => {
 				console.log(err);
 			});
@@ -340,7 +540,7 @@ class LoryJson extends Component {
         ...prevState.lorryJsonData,
         vehicleFields: [
           ...this.state.lorryJsonData.vehicleFields, 
-          { vehicle_no: "", supplier: "", driver_name: "", driver_no: "", 
+          { vehicle_no: "", supplier: "", driver_name: "", driver_no: "",vehicle_type:"", 
             change_place: "", change_reason: "",
             change_date: new Date().toISOString().split('T')[0]
           }
@@ -435,6 +635,25 @@ class LoryJson extends Component {
       }
     }));
   };
+  getVehicaletype = (value,index) => {            
+    if (this.state.lorryJsonData.vehicleFields.length > 0) {
+      if (value == 'Own Vehicle') {
+        this.state.lorryJsonData.vehicleFields[index]['is_disabled_no'] = true;             
+        this.state.lorryJsonData.vehicleFields[index]['vehicle_no'] = '';             
+        this.state.lorryJsonData.vehicleFields[index]['supplier_name'] = '';             
+        this.state.lorryJsonData.vehicleFields[index]['driver_name'] = '';             
+      } else {
+        this.state.lorryJsonData.vehicleFields[index]['is_disabled_no'] = false;     
+      }      
+      this.setState(prevState => ({
+        ...prevState,
+        lorryJsonData: {
+          ...prevState.lorryJsonData,
+          vehicleFields: this.state.lorryJsonData.vehicleFields
+        }
+      }));    
+    }    
+  }
   // ===============  Add Item  =========================
   AddItem = () => {
     // this.setState({ itemFields: [...this.state.itemFields, 
@@ -493,7 +712,8 @@ class LoryJson extends Component {
       { label: 'Earth', value: 'earth' },
       { label: 'Mars', value: 'mars' },
     ];
-
+    const options_ship = this.state.branch_option_ship;
+    const options_disp = this.state.branch_option_disp;
 
     const bill_type = [
       { label: 'Fixed', value: 'fixed' },
@@ -531,10 +751,14 @@ class LoryJson extends Component {
       { label: 'To pay', value: 'pay' },
       { label: 'Paid', value: 'paid' },
     ];
+    const vehicleType = [
+      { label: 'Own Vehicle', value: 'own_vehicle' },
+      { label: 'Market Vehicle', value: 'market_vehicle' }      
+    ];
     // const options = this.state.partyOptions;
    
     const partyOptions = this.state.partyOptions;
-    const driverOptions = this.state.driverOptions;
+    const driverOptions = this.state.driverOptions;       
     const vehicleOptions = this.state.vehicleOptions;
     const supplierOptions = this.state.supplierOptions;
     const itemOptions = [
@@ -545,13 +769,29 @@ class LoryJson extends Component {
       { label: 'Per Day', value: 'per day' },
       { label: 'Per Hour', value: 'per hour' },
     ];
-    const cities = City.sort((a, b) => (a.label > b.label) ? 1 : -1);
-    const { lr_no, lr_date, ewaybill_validity, from, to, consignor, consignee, dispatch_from, ship_to, dispatch_city, dispatch_state, ship_city, ship_state, ewaybill_number, advance_paid_by, chargeable_unit, advance_payment_date,
+    const vehicletypeOptions = [
+      { label: 'Own Vehicle', value: 'Own Vehicle' },
+      { label: 'Market Vehicle', value: 'Market Vehicle' },
+    ];
+    const cities = this.state.cityListOptions;
+    const stateslist = this.state.stateListOptions;
+    const { lr_no, lr_date, ewaybill_validity, from, to, consignor, to_city, to_state, from_city, from_state, consignee, dispatch_from, ship_to, dispatch_city, dispatch_state, ship_city, ship_state, ewaybill_number, advance_paid_by, chargeable_unit, advance_payment_date,
       advance_paid, pump_name, party_doc_type, party_doc_no, party_doc_date, party_shortage_unit, party_shortage_limit, party_detention_unit, party_detention_amount, party_comment, party_invoice_value, dispatch_address_line_1, dispatch_address_line_2, dispatch_address_line_3, ship_address_line_1, ship_address_line_2, ship_address_line_3, dispatch_pincode, ship_pincode, vehicleFields, service_charges, shortage_tolerance_limit,  drvr_licns_exp_date,
-      party_bill_to, party_bill_type, advance_other, party_chargeable_unit, party_actual_unit, party_challan_fee,_pc,
-      party_freight, party_freight_unit, advance_mode, pump_amount, party_freight_total, party_invoice_type, } = this.state.lorryJsonData;
+      party_bill_to, supp_bill_to, party_bill_type, supp_bill_type, advance_other, party_chargeable_unit, supp_chargeable_unit, party_chargeable_wt, supp_chargeable_wt, party_actual_unit, supp_actual_unit,party_actual_wt, party_challan_fee,_pc,supp_actual_wt, supp_freight, supp_freight_unit, supp_freight_total, supp_invoice_type, supp_shortage_unit, supp_shortage_limit, supp_detention_unit, supp_detention_amount, supp_comment,
+      party_freight, party_freight_unit, advance_mode, pump_amount, party_freight_total, party_invoice_type, driver_name, supplier, vehicle_no, vehicle_type } = this.state.lorryJsonData;
+      
     return (
       <div className="content">
+      <Link to='/lorry'><Button><ArrowBackIcon/>Go Back</Button></Link>        
+       <ToastContainer position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover/>
         <form onSubmit={this.handleSubmit}>
           <div className="row my-4">
             <div className="col-md-3"></div>
@@ -631,7 +871,7 @@ class LoryJson extends Component {
                         <Controls.Input 
                           name="party_doc_no" 
                           label="Party Document No."
-                          type="number" 
+                          type="text" 
                           value={party_doc_no}
                           onChange={this.changeHandler}
                         />
@@ -682,57 +922,77 @@ class LoryJson extends Component {
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
                       <div className="form-group">
                         <Controls.AutoComplete 
-                          label="From"
-                          name="from"
-                          value={from}
+                          label="From City"
+                          name="from_city"
+                          value={from_city}
                           options={cities}
                           isOptionEqualToValue={(option, value)=> option.id === value.id }
                           onChange={(event, newValue) => {
                             if(newValue != null){
                               if (typeof newValue === 'string') {
-                                 let value = newValue.value;
-                                // this.setState({from:value});
+                                let value = newValue.value;                                
                                 this.setState(prevState => ({
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    from: value
+                                    from_city: value
                                   }
                                 }));
                               } else if (newValue && newValue.inputValue) {
-                                let value = newValue.inputValue;
-                                // this.setState({from:value});
+                                let value = newValue.inputValue;                                
                                 this.setState(prevState => ({
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    from: value
+                                    from_city: value
                                   }
                                 }));
                               } else {
-                                let value = newValue.label;
-                                // this.setState({from:value});
+                                let value = newValue.label;                                
                                 this.setState(prevState => ({
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    from: value
+                                    from_city: value
                                   }
                                 }));
                               }
                             }
                           }}
-                          filterOptions={(City, params) => {
-                            const filtered = filter(City, params);
+                          filterOptions={(cities, params) => {
+                            const filtered = filter(cities, params);
                             const { inputValue } = params;
-                            const isExisting = City.some((option) => inputValue === option.label);
+                            const isExisting = cities.some((option) => inputValue === option.label);
                             if (inputValue !== '' && !isExisting) {
                               filtered.push({
                                 inputValue,
-                                label: `Add "${inputValue}"`,
+                                label: `${inputValue}`,
                               });
                             }
                             return filtered;
+                          }}
+                        />
+                      </div>
+                    </div>                    
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
+                      <div className="form-group">
+                      <Controls.AutoComplete
+                          label="From State"
+                          name="from_state"
+                          value={from_state}
+                          options={stateslist}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({from_state:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  from_state: value
+                                }
+                              }));
+                            }
                           }}
                         />
                       </div>
@@ -740,10 +1000,10 @@ class LoryJson extends Component {
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
                       <div className="form-group">
                         <Controls.AutoComplete
-                          label="To"
-                          value={to}
-                          name="to"
-                          options={City.sort((a, b) => (a.label > b.label) ? 1 : -1)} 
+                          label="To City"
+                          value={to_city}
+                          name="to_city"
+                          options={cities} 
                           onChange={(event, newValue) => {
                             if(newValue != null){
                               if (typeof newValue === 'string') {
@@ -753,7 +1013,7 @@ class LoryJson extends Component {
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    to: value
+                                    to_city: value
                                   }
                                 }));
                               } else if (newValue && newValue.inputValue) {
@@ -763,7 +1023,7 @@ class LoryJson extends Component {
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    to: value
+                                    to_city: value
                                   }
                                 }));
                               } else {
@@ -773,24 +1033,47 @@ class LoryJson extends Component {
                                   ...prevState,
                                   lorryJsonData: {
                                     ...prevState.lorryJsonData,
-                                    to: value
+                                    to_city: value
                                   }
                                 }));
                               }
                             }
                           }}
                           isOptionEqualToValue={(option, value)=> option.id === value.id}
-                          filterOptions={(City, params) => {
-                            const filtered = filter(City, params);
+                          filterOptions={(cities, params) => {
+                            const filtered = filter(cities, params);
                             const { inputValue } = params;
-                            const isExisting = City.some((option) => inputValue === option.label);
+                            const isExisting = cities.some((option) => inputValue === option.label);
                             if (inputValue !== '' && !isExisting) {
                               filtered.push({
                                 inputValue,
-                                label: `Add "${inputValue}"`,
+                                label: `"${inputValue}"`,
                               });
                             }
                             return filtered;
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
+                      <div className="form-group">
+                      <Controls.AutoComplete
+                          label="To State"
+                          name="to_state"
+                          value={to_state}
+                          options={stateslist}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({to_state:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  to_state: value
+                                }
+                              }));
+                            }
                           }}
                         />
                       </div>
@@ -827,7 +1110,8 @@ class LoryJson extends Component {
                           // PaperComponent={Link}                 
                           onChange={(event, newValue) => {
                             if(newValue != null){
-                              let value = newValue.id;
+                              let value = newValue.label;
+                              this.getBranchData(newValue.id,0)
                               // this.setState({consignor:value});
                               this.setState(prevState => ({
                                 ...prevState,
@@ -846,17 +1130,20 @@ class LoryJson extends Component {
                         <Controls.AutoComplete
                           label="Dispatch From"
                           name="dispatch_from"
-                          options={options}
+                          value={dispatch_from}
+                          options={options_disp}
                           getOptionLabel={option => option.label}
                           onChange={(event, newValue) => {
                             if(newValue != null){
                               let value = newValue.label;
+                              this.submit(newValue.id,0);
                               // this.setState({dispatch_from:value});
                               this.setState(prevState => ({
                                 ...prevState,
                                 lorryJsonData: {
                                   ...prevState.lorryJsonData,
-                                  dispatch_from: value
+                                  dispatch_from: value,
+                                  dispatch_from_id: newValue.id
                                 }
                               }));
                             }
@@ -903,26 +1190,57 @@ class LoryJson extends Component {
                     </div>
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
                       <div className="form-group">
-                        <Controls.AutoComplete
+                      <Controls.AutoComplete 
                           label="City"
                           name="dispatch_city"
                           value={dispatch_city}
-                          options={options}
-                          getOptionLabel={option => option.label}
+                          options={cities}
+                          isOptionEqualToValue={(option, value)=> option.id === value.id }
                           onChange={(event, newValue) => {
                             if(newValue != null){
-                              let value = newValue.label;
-                              // this.setState({dispatch_city:value});
-                              this.setState(prevState => ({
-                                ...prevState,
-                                lorryJsonData: {
-                                  ...prevState.lorryJsonData,
-                                  dispatch_city: value
-                                }
-                              }));
+                              if (typeof newValue === 'string') {
+                                 let value = newValue.value;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    dispatch_city: value
+                                  }
+                                }));
+                              } else if (newValue && newValue.inputValue) {
+                                let value = newValue.inputValue;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    dispatch_city: value
+                                  }
+                                }));
+                              } else {
+                                let value = newValue.label;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    dispatch_city: value
+                                  }
+                                }));
+                              }
                             }
                           }}
-                        />
+                          filterOptions={(cities, params) => {
+                            const filtered = filter(cities, params);
+                            const { inputValue } = params;
+                            const isExisting = cities.some((option) => inputValue === option.label);
+                            if (inputValue !== '' && !isExisting) {
+                              filtered.push({
+                                inputValue,
+                                label: `${inputValue}`,
+                              });
+                            }
+                            return filtered;
+                          }}
+                        /> 
                       </div>
                     </div>
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
@@ -931,7 +1249,7 @@ class LoryJson extends Component {
                           label="State"
                           name="dispatch_state"
                           value={dispatch_state}
-                          options={options}
+                          options={stateslist}
                           getOptionLabel={option => option.label}
                           onChange={(event, newValue) => {
                             if(newValue != null){
@@ -941,7 +1259,8 @@ class LoryJson extends Component {
                                 ...prevState,
                                 lorryJsonData: {
                                   ...prevState.lorryJsonData,
-                                  dispatch_state: value
+                                  dispatch_state: value,
+                                  dispatch_state_from_id: newValue.id
                                 }
                               }));
                             }
@@ -968,11 +1287,13 @@ class LoryJson extends Component {
                         <Controls.AutoComplete
                           label="Consignee"
                           name="consignee"
+                          value={consignee}
                           options={partyOptions}
                           getOptionLabel={option => option.label}
                           onChange={(event, newValue) => {
                             if(newValue != null){
-                              let value = newValue.id;
+                              let value = newValue.label;
+                              this.getBranchData(newValue.id,1)
                               // this.setState({consignee:value});
                               this.setState(prevState => ({
                                 ...prevState,
@@ -992,16 +1313,18 @@ class LoryJson extends Component {
                           label="Ship To"
                           name="ship_to"
                           value={ship_to}
-                          options={options}
+                          options={options_ship}
                           onChange={(event, newValue) => {
                             if(newValue != null){
                               let value = newValue.label;
+                              this.submit(newValue.id,1) 
                               // this.setState({ship_to:value});
                               this.setState(prevState => ({
                                 ...prevState,
                                 lorryJsonData: {
                                   ...prevState.lorryJsonData,
-                                  ship_to: value
+                                  ship_to: value,
+                                  ship_to_id: newValue.id
                                 }
                               }));
                             }
@@ -1046,25 +1369,60 @@ class LoryJson extends Component {
                     </div>
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
                       <div className="form-group">
-                        <Controls.AutoComplete
+                      <Controls.AutoComplete 
                           label="City"
                           name="ship_city"
                           value={ship_city}
-                          options={options}
+                          options={cities}
+                          isOptionEqualToValue={(option, value)=> option.id === value.id }
                           onChange={(event, newValue) => {
                             if(newValue != null){
-                              let value = newValue.label;
-                              // this.setState({ship_city:value});
-                              this.setState(prevState => ({
-                                ...prevState,
-                                lorryJsonData: {
-                                  ...prevState.lorryJsonData,
-                                  ship_city: value
-                                }
-                              }));
+                              if (typeof newValue === 'string') {
+                                 let value = newValue.value;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    ship_city: value,
+                                    ship_city_to_id: newValue.id
+                                  }
+                                }));
+                              } else if (newValue && newValue.inputValue) {
+                                let value = newValue.inputValue;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    ship_city: value,
+                                    ship_city_to_id: newValue.id
+                                  }
+                                }));
+                              } else {
+                                let value = newValue.label;                                
+                                this.setState(prevState => ({
+                                  ...prevState,
+                                  lorryJsonData: {
+                                    ...prevState.lorryJsonData,
+                                    ship_city: value,
+                                    ship_city_to_id: newValue.id
+                                  }
+                                }));
+                              }
                             }
                           }}
-                        />
+                          filterOptions={(cities, params) => {
+                            const filtered = filter(cities, params);
+                            const { inputValue } = params;
+                            const isExisting = cities.some((option) => inputValue === option.label);
+                            if (inputValue !== '' && !isExisting) {
+                              filtered.push({
+                                inputValue,
+                                label: `${inputValue}`,
+                              });
+                            }
+                            return filtered;
+                          }}
+                        /> 
                       </div>
                     </div>
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-1">
@@ -1073,7 +1431,7 @@ class LoryJson extends Component {
                           label="State"
                           name="ship_state"
                           value={ship_state}
-                          options={options}
+                          options={stateslist}
                           onChange={(event, newValue) => {
                             if(newValue != null){
                               let value = newValue.label;
@@ -1082,7 +1440,8 @@ class LoryJson extends Component {
                                 ...prevState,
                                 lorryJsonData: {
                                   ...prevState.lorryJsonData,
-                                  ship_state: value
+                                  ship_state: value,
+                                  ship_state_to_id: newValue.id
                                 }
                               }));
                             }
@@ -1123,16 +1482,37 @@ class LoryJson extends Component {
                 <div className="card-body">
                   { this.state.lorryJsonData.vehicleFields.map((vehicle, index) => (
                     <div className="row" key={index}>
+                      <div className="col-xs-2 col-lg-2 col-md-2 col-sm-12">
+                        <div className="form-group">
+                          <Controls.AutoComplete
+                            label="Vehicle Type." 
+                            name="vehicle_type" 
+                            key={index}
+                            value={vehicle.vehicle_type}
+                            options={vehicletypeOptions}
+                            PaperComponent={AddVehicle}
+                            onChange={(event, newValue) => {
+                              if(newValue != null){
+                                vehicle.vehicle_type = newValue.label; 
+                                this.getVehicaletype(newValue.value,index)                             
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
                       <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12">
                         <div className="form-group">
                           <Controls.AutoComplete
                             label="Vehicle No." 
                             name="vehicle_no" 
+                            value={vehicle_no}
+                            disabled={vehicle.is_disabled_no}
                             key={index}
                             options={vehicleOptions}
                             PaperComponent={AddVehicle}
                             onChange={(event, newValue) => {
                               vehicle.vehicle_no = newValue.id; 
+                              vehicle.vehicle_name = newValue.label; 
                             }}
                           />
                         </div>
@@ -1141,12 +1521,15 @@ class LoryJson extends Component {
                         <div className="form-group">
                           <Controls.AutoComplete 
                             label="Supplier" 
-                            name="supplier" 
+                            name="supplier"
+                            value={supplier} 
                             key={index}
+                            disabled={vehicle.is_disabled_no}
                             options={supplierOptions}
                             PaperComponent={AddSupplier}
                             onChange={(event, newValue) => { 
-                                vehicle.supplier = newValue.id; 
+                                vehicle.supplier = newValue.label; 
+                                vehicle.supplier_id = newValue.id; 
                             }}
                           />
                         </div>
@@ -1156,16 +1539,19 @@ class LoryJson extends Component {
                           <Controls.AutoComplete
                             label="Driver Name"
                             name="driver_name"
+                            value={driver_name} 
+                            disabled={vehicle.is_disabled_no}
                             key={index}
                             options={driverOptions}
                             PaperComponent={AddDriver}
                             onChange={(event, newValue) => {
-                              vehicle.driver_name = newValue.id; 
+                              vehicle.driver_name = newValue.label; 
+                              vehicle.driver_id = newValue.id; 
                             }}
                           />
                         </div>
                       </div>
-                      <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12">
+                      {/* <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12">
                         <div className="form-group">
                           <Controls.Input
                             name="driver_no" 
@@ -1178,7 +1564,7 @@ class LoryJson extends Component {
                             }}
                           />
                         </div>
-                      </div>
+                      </div> */}
                       <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12" id={`change_place-${index}`}>
                         <div className="form-group">
                           <Controls.Input
@@ -1222,9 +1608,16 @@ class LoryJson extends Component {
                           />
                         </div>
                       </div>
-                      <div className="col-xs-12 col-lg-12 col-md-12 col-sm-12 mt-0">
-                        <Controls.Button color="error" onClick={() => { this.RemoveVehicle(index)}} text="Remove"/>
+                      <div className="col-xs-1 col-lg-1 col-md-1 col-sm-1">
+                        <Tooltip title="Delete" placement="top">
+                          <Button  variant="text" color="error" onClick = {() => { this.RemoveVehicle(index)}}>
+                            <Icon.Delete />
+                          </Button>
+                        </Tooltip>
                       </div>
+                      {/* <div className="col-xs-12 col-lg-12 col-md-12 col-sm-12 mt-0">
+                        <Controls.Button color="error" onClick={() => { this.RemoveVehicle(index)}} text="Remove"/>
+                      </div> */}
                     </div>
                   ))}
                 </div>
@@ -1259,6 +1652,17 @@ class LoryJson extends Component {
                       <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12">
                         <div className="form-group">
                           <Controls.Input
+                            name="product_weight" 
+                            label="Product Weight" 
+                            type="text"
+                            value={item.product_weight}
+                            onChange={event => this.handleChangeItem(index, event)}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-xs-2 col-lg-2 col-md-2 col-sm-12">
+                        <div className="form-group">
+                          <Controls.Input
                             name="product_unit" 
                             label="Product Unit." 
                             type="text"
@@ -1271,26 +1675,22 @@ class LoryJson extends Component {
                         <div className="form-group">
                           <Controls.Input
                             name="product_dimension" 
-                            label="Product Dimension." 
+                            label="Comments" 
                             type="text"
                             value={item.product_dimension}
                             onChange={event => this.handleChangeItem(index, event)}
                           />
                         </div>
-                      </div>
-                      <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12">
-                        <div className="form-group">
-                          <Controls.Input
-                            name="product_weight" 
-                            label="Product Weight" 
-                            type="text"
-                            value={item.product_weight}
-                            onChange={event => this.handleChangeItem(index, event)}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 mt-0">
-                        <Controls.Button color="error" onClick={() => { this.RemoveItem(index)}} text="Remove"/>
+                      </div>                      
+                      <div className="col-xs-1 col-lg-1 col-md-4 col-sm-12">
+                      <Tooltip title="Delete" placement="top">
+                        <Button  variant="text" color="error" onClick = {() => { this.RemoveItem(index)}}>
+                          <Icon.Delete />
+                        </Button>
+                      </Tooltip>
+                        {/* <Controls.Button color="error" onClick={() => { this.RemoveItem(index)}}>
+                            <Icon.Delete />
+                        </Controls.Button> */}
                       </div>
                     </div>
                   ))}
@@ -1315,13 +1715,14 @@ class LoryJson extends Component {
                           value={party_bill_to}
                           onChange={(event, newValue) => {
                             if(newValue != null){
-                              let value = newValue.id;
+                              let value = newValue.label;
                               // this.setState({party_bill_to:value});
                               this.setState(prevState => ({
                                 ...prevState,
                                 lorryJsonData: {
                                   ...prevState.lorryJsonData,
-                                  party_bill_to: value
+                                  party_bill_to: value,
+                                  party_id: newValue.id
                                 }
                               }));
                             }
@@ -1355,7 +1756,7 @@ class LoryJson extends Component {
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
                       <div className="form-group">
                         <Controls.Input name="party_chargeable_unit" 
-                          label="Chargeable WT/Unit"
+                          label="Chargeable Unit"
                           type="number"
                           value={party_chargeable_unit}
                           onChange={this.changeHandler}
@@ -1364,10 +1765,30 @@ class LoryJson extends Component {
                     </div>
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
                       <div className="form-group">
+                        <Controls.Input name="party_chargeable_wt" 
+                          label="Chargeable WT"
+                          type="number"
+                          value={party_chargeable_wt}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
                         <Controls.Input name="party_actual_unit" 
-                          label="Actual WT/Unit" 
+                          label="Actual Unit" 
                           type="number"
                           value={party_actual_unit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="party_actual_wt" 
+                          label="Actual WT" 
+                          type="number"
+                          value={party_actual_wt}
                           onChange={this.changeHandler}
                         />
                       </div>
@@ -1428,14 +1849,14 @@ class LoryJson extends Component {
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
                       <div className="form-group">
                         <Controls.Input name="party_shortage_limit"
-                          label="Shortage Tolerance Limit"
-                          type="number"
+                          label="Shortage Tolerance Limit/Unit"
+                          type="text"
                           value={party_shortage_limit}
                           onChange={this.changeHandler}
                         />
                       </div>
                     </div>
-                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                    {/* <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
                       <div className="form-group">
                         <Controls.Input name="party_shortage_unit"
                           label="Shortage Tolerance Unit"
@@ -1444,7 +1865,7 @@ class LoryJson extends Component {
                           onChange={this.changeHandler}
                         />
                       </div>
-                    </div>
+                    </div> */}
                     <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
                       <div className="form-group">
                         <Controls.Input name="party_detention_amount"
@@ -1493,6 +1914,224 @@ class LoryJson extends Component {
               </div> 
             </div>
           </div>
+          {/* New functionality */}
+          <div className="row">
+            <div className="col-12 mt-3"> 
+              <div className="card">
+                <div className="card-header">
+                  <h6 className="card-title m-0">SUPPLIER BILLING</h6>
+                </div>
+                <div className="card-body">
+                  <div className="row">
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.AutoComplete
+                          label="Bill To"
+                          name="supp_bill_to"
+                          options={supplierOptions}
+                          value={supp_bill_to}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({party_bill_to:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  supp_bill_to: value,
+                                  supp_id: newValue.id
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.AutoComplete
+                          label="Bill Type"
+                          name="supp_bill_type"
+                          options={bill_type}
+                          value={supp_bill_type}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({supp_bill_type:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  supp_bill_type: value
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_chargeable_unit" 
+                          label="Chargeable Unit"
+                          type="number"
+                          value={supp_chargeable_unit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_chargeable_wt" 
+                          label="Chargeable WT"
+                          type="number"
+                          value={supp_chargeable_wt}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_actual_unit" 
+                          label="Actual Unit" 
+                          type="number"
+                          value={supp_actual_unit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_actual_wt" 
+                          label="Actual WT" 
+                          type="number"
+                          value={supp_actual_wt}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_freight"
+                          label="Freight"
+                          type="text"
+                          value={supp_freight}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_freight_unit"
+                          label="Freight Unit"
+                          type="text"
+                          value={supp_freight_unit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_freight_total"
+                          label="Freight Total"
+                          type="text"
+                          value={supp_freight_total}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.AutoComplete 
+                          label="Invoice Type" 
+                          name="supp_invoice_type" 
+                          options={invoiceType}
+                          value={supp_invoice_type}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({party_invoice_type:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  supp_invoice_type: value
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_shortage_limit"
+                          label="Shortage Tolerance Limit/Unit"
+                          type="text"
+                          value={supp_shortage_limit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    {/* <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="party_shortage_unit"
+                          label="Shortage Tolerance Unit"
+                          type="number"
+                          value={party_shortage_unit}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div> */}
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_detention_amount"
+                          label="Detention Amount"
+                          type="text"
+                          value={supp_detention_amount}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.AutoComplete 
+                          label="Detention Unit" 
+                          name="supp_detention_unit" 
+                          options={detentionType}
+                          value={supp_detention_unit}
+                          onChange={(event, newValue) => {
+                            if(newValue != null){
+                              let value = newValue.label;
+                              // this.setState({supp_detention_unit:value});
+                              this.setState(prevState => ({
+                                ...prevState,
+                                lorryJsonData: {
+                                  ...prevState.lorryJsonData,
+                                  supp_detention_unit: value
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
+                      <div className="form-group">
+                        <Controls.Input name="supp_comment"
+                          label="Comment"
+                          type="text"
+                          value={supp_comment}
+                          onChange={this.changeHandler}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div> 
+            </div>
+          </div>
+          {/* New functionality */}
           <div className="row">
             <div className="col-12 mt-3">
               <div className="card">
@@ -1542,6 +2181,7 @@ class LoryJson extends Component {
                             <Controls.AutoComplete 
                               label="Advance Mode" 
                               name="advance_mode"
+                              value={advance_mode}
                               options={advancedMode}
                               renderInput=""
                               onChange={(event, newValue) => {
@@ -1590,19 +2230,7 @@ class LoryJson extends Component {
                                   }}
                                 />
                               </div>
-                            </div>
-                            <div className="col-xs-3 col-lg-3 col-md-4 col-sm-12 mt-2">
-                              <div className="form-group">
-                                <Controls.Input name="pump_amount" 
-                                  label="Pump Amount"
-                                  type="text"
-                                  value={advance.pump_amount}
-                                  onChange={(event, value) => { 
-                                    this.handleChangeAdvance(index, event, value)
-                                  }}
-                                />
-                              </div>
-                            </div>
+                            </div>                          
                           </div>
                         </div>
                         <div className="col-12 d-none" id={`bank-${index}`}>
@@ -1656,20 +2284,24 @@ class LoryJson extends Component {
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="col-xs-12 col-lg-12 col-md-12 col-sm-12 mt-0">
-                          <Controls.Button color="error" onClick={() => { this.RemoveAdvance(index)}} text="Remove"/>
+                        </div>                      
+                        <div className="col-xs-1 col-lg-1 col-md-1 col-sm-1">
+                        <Tooltip title="Delete" placement="top">
+                        <Button  variant="text" color="error" onClick = {() => { this.RemoveAdvance(index)}}>
+                          <Icon.Delete />
+                        </Button>
+                      </Tooltip>                        
                         </div>
                       </div>
                   ))}
                   <div className="row mt-4 float-right">
-                      <Controls.Button variant="contained" color="success" onClick={this.handleSubmit} text="Save"/>
+                      <Controls.Button variant="contained" color="success" onClick={this.handleSubmit} text="Save"/>&nbsp;
                       <ReactToPrint 
                       trigger={() =>
                         <Controls.Button variant="contained" color="primary" text="Print"/>
                         }
                         content={() => this.componentRef}
-                        documentTitle="AwesomeFileName"
+                        documentTitle={lr_no}
                       />
                       <div className="d-none">
                         <ComponentToPrint  ref={el => (this.componentRef = el)} data={this.state.lorryJsonData}/>

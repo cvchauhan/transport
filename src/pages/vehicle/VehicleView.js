@@ -16,30 +16,28 @@ class VehicleView extends React.Component {
         try {
             this.setState({...this.state, isFetching: true});
             const response = await Axios.get(`vehicle/${this.props.id}`);
-            // single vehicle details storing in dataValues
-            this.setState({dataValues: response.data, isFetching: false});
-            console.log(this.state.dataValues);
+            // single vehicle details storing in dataValues            
+            this.setState({dataValues: response.data, isFetching: false});            
         } catch (e) {
             console.log(e);
             this.setState({...this.state, isFetching: false});
         }
     }
-    componentDidMount = () => {
-        // console.log(this.props.id)
+    componentDidMount = () => {        
         this.fetchVehicleDetailAsync();
     } 
 
     render() {
         const data = this.state.dataValues;
-        if(data.veh_type === '1') {
-          data.veh_type = 'Truck';
-        } else if(data.veh === '2') {
-          data.veh_type = 'Trailer';
-        } else if(data.veh === '3') {
-          data.veh_type = 'Other';
-        } else {
-          data.veh_type = '';
-        }
+        // if(data.veh_type === '1') {
+        //   data.veh_type = 'Truck';
+        // } else if(data.veh === '2') {
+        //   data.veh_type = 'Trailer';
+        // } else if(data.veh === '3') {
+        //   data.veh_type = 'Other';
+        // } else {
+        //   data.veh_type = '';
+        // }
 
         
         return (

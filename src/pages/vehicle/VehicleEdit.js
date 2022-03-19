@@ -36,8 +36,7 @@ class VehicleFormEdit extends React.Component {
     }
   }
   componentDidMount = () => {
-    Axios.get(`vehicle/${this.props.id}`).then(res => {
-      console.log(res.data);
+    Axios.get(`vehicle/${this.props.id}`).then(res => {      
       const data = res.data;
       this.setState({
         veh_no: data.veh_no ? data.veh_no : '',
@@ -64,21 +63,22 @@ class VehicleFormEdit extends React.Component {
     this.setState({ [e.target.name]: e.target.value })
   }
 
-  updateVehicleDetails(values) {
-    console.log("hi", values)
+  updateVehicleDetails(values) {    
     Axios.patch(`vehicle/${this.props.id}`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.popupChange(false, 'Vehicle Updated Successfully.', 'success'); //popup close
-        this.props.refreshTable();
-        console.log("sita");
-      }).catch(err => {
-        console.log("ram");
+        this.props.refreshTable();        
+      }).catch(err => {        
         this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close
         console.log(err);
       });
   }
-
+  calculate() {    
+    this.setState(prevState => ({
+      ...prevState,
+      ['veh_capacity']: prevState.veh_unladen_wght != '' ? (prevState.veh_laden_wght - prevState.veh_unladen_wght) : prevState.veh_laden_wght
+    }));
+  }
 
   render() {
     const filter = createFilterOptions();
@@ -117,7 +117,10 @@ class VehicleFormEdit extends React.Component {
                     label="Vehicle Number"
                     value={values.veh_no}
                     type="text"
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e)
+                      this.setState({veh_no: e.target.value})
+                    }}
                   />
                   <Controls.Error name="veh_no" />
                 </div>
@@ -126,6 +129,7 @@ class VehicleFormEdit extends React.Component {
                     as={Controls.AutoComplete}
                     label="Vehicle Type"
                     name="veh_type"
+                    value={values.veh_type}                    
                     options={multiValues}
                     onChange={(event, newValue) => {
                       if (newValue != null) {
@@ -183,10 +187,17 @@ class VehicleFormEdit extends React.Component {
                   <Field
                     as={Controls.Input}
                     name="veh_laden_wght"
-                    label="Laden weight (in KG)"
-                    type="number"
+                    label="Gross weight (in KG)"
+                    type="text"
                     value={values.veh_laden_wght}
-                    onChange={handleChange}
+                    onChange={e => {
+                      handleChange(e)
+                      this.setState(prevState => ({
+                        ...prevState,
+                        veh_laden_wght: e.target.value
+                      }));
+                      this.calculate();                      
+                    }}
                   />
                   <Controls.Error name="veh_laden_wght" />
                 </div>
@@ -194,10 +205,17 @@ class VehicleFormEdit extends React.Component {
                   <Field
                     as={Controls.Input}
                     name="veh_unladen_wght"
-                    label="Unladen weight (in KG)"
-                    type="number"
+                    label="Vehicle weight (in KG)"
+                    type="text"
                     value={values.veh_unladen_wght}
-                    onChange={handleChange}
+                    onChange={e => {
+                      handleChange(e)
+                      this.setState(prevState => ({
+                        ...prevState,
+                        veh_unladen_wght: e.target.value
+                      }));                      
+                      this.calculate();                      
+                    }}
                   />
                   <Controls.Error name="veh_unladen_wght" />
                 </div>
@@ -207,9 +225,12 @@ class VehicleFormEdit extends React.Component {
                     as={Controls.Input}
                     name="veh_capacity"
                     label="Capacity"
-                    type="number"
+                    type="text"
                     value={values.veh_capacity}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e)
+                      this.setState({veh_capacity: e.target.value})
+                    }}
                   />
                   <Controls.Error name="veh_capacity" />
                 </div>
@@ -222,7 +243,10 @@ class VehicleFormEdit extends React.Component {
                     label="Owner Name"
                     type="text"
                     value={values.veh_owner_name}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e)
+                      this.setState({veh_owner_name: e.target.value})
+                    }}
                   />
                   <Controls.Error name="veh_owner_name" />
                 </div>
@@ -233,7 +257,10 @@ class VehicleFormEdit extends React.Component {
                     label="Owner Contact"
                     type="text"
                     value={values.veh_owner_contact}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e)
+                      this.setState({veh_owner_contact: e.target.value})
+                    }}
                   />
                   <Controls.Error name="veh_owner_contact" />
                 </div>
@@ -244,7 +271,10 @@ class VehicleFormEdit extends React.Component {
                     label="Owner PAN"
                     type="text"
                     value={values.veh_owner_pan}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e)
+                      this.setState({veh_owner_pan: e.target.value})
+                    }}
                   />
                   <Controls.Error name="veh_owner_pan" />
                 </div>

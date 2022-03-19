@@ -42,12 +42,10 @@ class LoryForm extends Component {
   addSupply(){
     this.setState([ ...this.state.supplyFields, {suppList: { supply_freight: '', supply_freight_unit: '', supply_freight_total: '',}}])
   }
-  handleChangeSuppInput = (index, event) => {
-    // console.log(index, event.target.value);
+  handleChangeSuppInput = (index, event) => {    
     const list = [...this.state.supplyFields];
     list[index][event.target.name] = event.target.value;
-    this.setState({ supplyFields: list });
-    console.log(this.state.supplyFields);
+    this.setState({ supplyFields: list });    
   }
   handleRemoveClick = index => {
     const list = [...this.state.supplyFields];
@@ -314,7 +312,7 @@ class LoryForm extends Component {
                     <Mat.Grid item xs={3} lg={3} md={3}sm={12}>
                       <div className="form-group" controlId="advanced_mode">
                         <label>Advanced Mode</label>
-                        <Form.Select className="form-control" className="form-control">
+                        <Form.Select className="form-control">
                           <option disabled>Select Advanced Mode</option>
                           <option value="1">Cash</option>
                           <option value="2">IMPS</option>

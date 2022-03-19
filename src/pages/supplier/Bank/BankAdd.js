@@ -24,11 +24,10 @@ class SupplierBankAdd extends React.Component {
   componentDidMount = () => {
     // get all branches according to supplierId
     Axios.get(`supplier_branch/branches/${this.props.supplierId}/`)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         let data = res.data;
         data.map((value) => {
-          value.label = value.supp_br_state
+          value.label = value.supp_br_city
         });
         this.setState({
           branches: data
@@ -52,21 +51,10 @@ class SupplierBankAdd extends React.Component {
   
   sendBankDetails(values) {
     Axios.post(`supplier_bank/add/`, values)
-      .then(res => {
-        console.log(res);
+      .then(res => {        
         this.props.popupChange(false, 'Supplier Bank Added Successfully.', 'success'); //popup close
       }).catch(error => {
-        this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close
-        console.log(error);
-        if (error.response) {
-          console.log(error.response)
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log('Error', error.message);
-        }
-        console.log(error.config);
+        this.props.popupChange(false, 'Something Went Wrong.', 'error'); //popup close        
       });
   }
 
@@ -90,9 +78,8 @@ class SupplierBankAdd extends React.Component {
                     className="branch-select"
                     name="branchId"
                     options={this.state.branches ? this.state.branches: []}
-                    getOptionLabel={option => option.supp_br_state}
-                    onChange={(e, value) => {
-                      console.log(value);
+                    getOptionLabel={option => option.supp_br_city}
+                    onChange={(e, value) => {                      
                       setFieldValue("branchId", value !== null ? value.id : values.branchId);
                     }}
                     renderInput={params => (

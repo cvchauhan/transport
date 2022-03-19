@@ -17,16 +17,13 @@ class DriverView extends React.Component {
             this.setState({...this.state, isFetching: true});
             const response = await Axios.get(`driver/${this.props.id}`);
             // single driver details storing in dataValues
-            this.setState({dataValues: response.data, isFetching: false});
-
-            console.log(this.state.dataValues);
+            this.setState({dataValues: response.data, isFetching: false});            
         } catch (e) {
             console.log(e);
             this.setState({...this.state, isFetching: false});
         }
     }
-    componentDidMount = () => {
-        // console.log(this.props.id)
+    componentDidMount = () => {        
         this.fetchDriverDetailAsync();
     } 
 

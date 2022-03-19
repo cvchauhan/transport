@@ -17,9 +17,8 @@ class PartyForm extends React.Component {
 	}
 
 	componentDidMount = () => {
-		Axios.get(`party/${this.props.partyId}`).then(res => {
-			console.log(res.data);
-			const data = res.data;
+		Axios.get(`party/${this.props.partyId}`).then(res => {			
+			const data = res.data.result;
 			this.setState({
 				party_name: data.party_name ? data.party_name : '',
 				party_email: data.party_email ? data.party_email : '',
@@ -40,11 +39,9 @@ class PartyForm extends React.Component {
 		}
 	}
 
-	updatePartyDetails(values) {
-		console.log(values)
+	updatePartyDetails(values) {		
 		Axios.patch(`party/${this.props.partyId}`, values)
-			.then(res => {
-				console.log(res);
+			.then(res => {				
 				this.props.popupChange(false, 'Party Updated Successfully.', 'success'); //popup close
 				this.props.refreshTable();
 			}).catch(err => {
@@ -72,7 +69,7 @@ class PartyForm extends React.Component {
 									<Field
 										as={Controls.Input}
 										name="party_name"
-										label="Commpany Name"
+										label="Company Name"
 										type="text"
 										value={values.party_name}
 										onChange={handleChange}
@@ -108,7 +105,7 @@ class PartyForm extends React.Component {
 									<Field
 										as={Controls.Input}
 										name="party_email"
-										label="Commpany Email Address."
+										label="Company Email Address."
 										type="email"
 										value={values.party_email}
 										onChange={handleChange}
